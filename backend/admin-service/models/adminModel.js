@@ -2,7 +2,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
 // build an absolute path to shared-db/database.sqlite
-const dbPath = path.join(__dirname, '..', 'shared-db', 'database.sqlite');
+const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
 
 // optional: log it for debugging
 console.log('🔗 Using database at:', dbPath);

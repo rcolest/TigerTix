@@ -1,20 +1,19 @@
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
 
-const dbPath = path.resolve(__dirname, '../../shared-db/database.sqlite');
+const dbPath = path.join(__dirname, '../shared-db/database.sqlite');
+const db = new sqlite3.Database(dbPath);
 
-function createEvent(eventData, callback){
-    const db = new sqlite3.Database(dbPath);
-    const { name, data, num_tickets } = eventData;
-
-    const query = 'INSERT INTO events (name, date, num_tickets) VALUES (?, ?, ?)';
-    db.run(query, [name, date, num_tickets], function(err){
-        db.close();
-        if(err){
-            return callback(err);
-        }
-        callback(null, { id: this.lastID })
-    });
-}
-
-module.exports = { createEvent };
+exports.createEvent = ({ name, date, num_tickets }, callback) => {
+  db.run(
+    `INSERT INTO events (name, date, num_tickets) VALUES (?, ?, ?)`,
+    [name, date, num_tickets],
+    function (err) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(null, { id: this.lastID });
+      }
+    }
+  );
+};

@@ -9,8 +9,8 @@ exports.addEvent = (req, res) => {
 
   adminModel.createEvent({ name, date, num_tickets }, (err, result) => {
     if (err) {
-      console.error('Error inserting event:', err);
-      return res.status(500).json({ error: 'Failed to add event' });
+      console.error('🧠 Database error:', err.message);
+      return res.status(500).json({ error: err.message });
     }
     res.status(201).json({ message: 'Event added successfully', eventId: result.id });
   });

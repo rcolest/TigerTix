@@ -1,12 +1,8 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-// build an absolute path to shared-db/database.sqlite
+// Connect to shared database
 const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
-
-// optional: log it for debugging
-console.log('🔗 Using database at:', dbPath);
-
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('❌ Error connecting to database:', err.message);
@@ -15,6 +11,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+// Create an event
 exports.createEvent = ({ name, date, num_tickets }, callback) => {
   db.run(
     `INSERT INTO events (name, date, num_tickets) VALUES (?, ?, ?)`,
@@ -24,4 +21,12 @@ exports.createEvent = ({ name, date, num_tickets }, callback) => {
       else callback(null, { id: this.lastID });
     }
   );
+};
+
+// Optional: get all events
+exports.getAllEvents = (callback) => {
+  db.all('SELECT * FROM events', [], (err, rows) => {
+    if (err) callback(err);
+    else callback(null, rows);
+  });
 };

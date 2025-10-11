@@ -5,9 +5,8 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  const clientUrl = "http://localhost:6001/api/events"; // your client-service
+  const clientUrl = "http://localhost:6001/api/events";
 
-  // Fetch events from client service
   const fetchEvents = async () => {
     try {
       const res = await fetch(clientUrl);
@@ -23,7 +22,6 @@ export default function Events() {
     fetchEvents();
   }, []);
 
-  // Buy ticket
   const buyTicket = async (id) => {
     try {
       const res = await fetch(`${clientUrl}/${id}/purchase`, {
@@ -37,13 +35,12 @@ export default function Events() {
         return;
       }
 
-      // Update local state
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === id ? { ...event, num_tickets: data.event.num_tickets } : event
         )
       );
-      setMessage(`✅ Ticket purchased for event ${id}`);
+      setMessage(`✅ Ticket purchased for ${events.find(e => e.id === id).name}`);
     } catch (err) {
       console.error("Error purchasing ticket:", err);
       setMessage("❌ Error purchasing ticket");
@@ -55,16 +52,17 @@ export default function Events() {
   return (
     <div>
       <h2>Campus Events</h2>
-      {message && <p>{message}</p>}
+      {message && <p role="status">{message}</p>}
       <ul>
         {events.map((event) => (
           <li key={event.id} style={{ marginBottom: "10px" }}>
-            <strong>{event.name}</strong> <br />
-            Date: {event.date} <br />
-            Tickets Available: {event.num_tickets} <br />
+            <h3>{event.name}</h3>
+            <p>Date: {event.date}</p>
+            <p>Tickets Available: {event.num_tickets}</p>
             <button
               onClick={() => buyTicket(event.id)}
               disabled={event.num_tickets <= 0}
+              aria-label={`Buy 1 ticket for ${event.name}, ${event.num_tickets} tickets remaining`}
             >
               Buy Ticket
             </button>

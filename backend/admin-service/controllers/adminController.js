@@ -1,6 +1,5 @@
 const adminModel = require('../models/adminModel');
 
-// Add a new event
 exports.addEvent = (req, res) => {
   const { name, date, num_tickets } = req.body;
 
@@ -17,7 +16,6 @@ exports.addEvent = (req, res) => {
   });
 };
 
-// Optional: get all events
 exports.getEvents = (req, res) => {
   adminModel.getAllEvents((err, rows) => {
     if (err) {

@@ -2,8 +2,8 @@ TigerTix Clemson Campus Event Ticketing System - CPSC 3720 Section 3
 
 How To Run/Test App:
 1.
-Open a terminal in the backend folder and enter:
->node server.js
+Open a terminal in backend/client-service and enter:
+node server.js
 
 2.
 Open a new terminal in the frontend folder and enter:

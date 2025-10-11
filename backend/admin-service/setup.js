@@ -5,7 +5,7 @@ const path = require('path');
 // Absolute path to shared-db/database.sqlite
 const dbPath = path.join(__dirname, '..', 'shared-db', 'database.sqlite');
 // Absolute path to init.sql
-const initSqlPath = path.join(__dirname, '..', '..', 'shared-db', 'init.sql');
+const initSqlPath = path.join(__dirname, '..', 'shared-db', 'init.sql');
 
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {

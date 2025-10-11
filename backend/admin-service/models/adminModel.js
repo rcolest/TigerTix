@@ -10,6 +10,12 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
+/* Creates a new event, and adds it to the database.
+ * INPUTS:
+ * name - The listed name for the event.
+ * date - The date on which the event is to be held.
+ * num_tickets - The number of tickets to be listed as part of this event.
+*/
 exports.createEvent = ({ name, date, num_tickets }, callback) => {
   db.run(
     `INSERT INTO events (name, date, num_tickets) VALUES (?, ?, ?)`,
@@ -21,6 +27,10 @@ exports.createEvent = ({ name, date, num_tickets }, callback) => {
   );
 };
 
+/* Prints a list of every event in the database.
+ * RETURNS:
+ * A list of all events in the database.
+*/
 exports.getAllEvents = (callback) => {
   db.all('SELECT * FROM events', [], (err, rows) => {
     if (err) callback(err);

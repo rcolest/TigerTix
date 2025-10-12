@@ -7,6 +7,11 @@ export default function Events() {
 
   const clientUrl = "http://localhost:6001/api/events";
 
+  /* 
+  * Loads in the list of events to display to the end user.
+  * INPUTS: None
+  * RETURNS: None
+  */
   const fetchEvents = async () => {
     try {
       const res = await fetch(clientUrl);
@@ -22,6 +27,13 @@ export default function Events() {
     fetchEvents();
   }, []);
 
+  /*
+  * Attempts to purchase a ticket from a specific event.
+  * INPUTS:
+  * id - The ID of the event which is being purchased from.
+  * RETURNS: A message confirming the purchase of the ticket.
+  * Will error if the event ID does not exist, or if there are no more tickets left in that event.
+  */
   const buyTicket = async (id) => {
     try {
       const res = await fetch(`${clientUrl}/${id}/purchase`, {

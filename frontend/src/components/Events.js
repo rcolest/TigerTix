@@ -5,6 +5,7 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [confirmId, setConfirmId] = useState(-1);
 
   const clientUrl = "http://localhost:6001/api/events";
 
@@ -39,6 +40,7 @@ export default function Events() {
   const confirmToggle = async (id, confirm) => {
       try {
           setConfirm(confirm);
+          setConfirmId(id);
           setMessage(confirm ? `Are you sure you want to purchase ticket for ${events.find(e => e.id === id).name}?` : "✅ Ticket purchase cancelled");
       }
       catch {
@@ -92,7 +94,7 @@ export default function Events() {
             <p>Date: {event.date}</p>
             <p>Tickets Available: {event.num_tickets}</p>
 
-            {!confirm && <button
+            {!(confirm && confirmId === event.id) && <button
               onClick={() => confirmToggle(event.id, true)}
               disabled={event.num_tickets <= 0}
               aria-label={`Buy 1 ticket for ${event.name}, ${event.num_tickets} tickets remaining`}
@@ -100,14 +102,14 @@ export default function Events() {
               Buy Ticket
             </button>}
 
-            {confirm && <button
+            {confirm && confirmId === event.id && <button
                 onClick={() => buyTicket(event.id)}
                 aria-label="Confirm purchase"
             >
                 Yes
             </button>}
 
-            {confirm && <button
+            {confirm && confirmId === event.id && <button
                 onClick={() => confirmToggle(event.id, false)}
                 aria-label="Deny purchase"
             >

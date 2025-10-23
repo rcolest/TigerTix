@@ -4,10 +4,11 @@ export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [confirm, setConfirm] = useState(false);
 
   const clientUrl = "http://localhost:6001/api/events";
 
-  /* 
+  /*
   * Loads in the list of events to display to the end user.
   * INPUTS: None
   * RETURNS: None
@@ -26,6 +27,24 @@ export default function Events() {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+
+  /*
+  * Toggles the state of displaying the confirmation buttons.
+  * INPUTS:
+  * id - The ID of the event which is being purchased from.
+  * confirm - The state to switch the confirmation to.
+  * RETURNS: A message about the switching of confirmation.
+  */
+  const confirmToggle = async (id, confirm) => {
+      try {
+          setConfirm(confirm);
+          setMessage(confirm ? `Are you sure you want to purchase ticket for ${events.find(e => e.id === id).name}?` : "✅ Ticket purchase cancelled");
+      }
+      catch {
+
+      }
+  }
 
   /*
   * Attempts to purchase a ticket from a specific event.
@@ -56,7 +75,8 @@ export default function Events() {
     } catch (err) {
       console.error("Error purchasing ticket:", err);
       setMessage("❌ Error purchasing ticket");
-    }
+      }
+      setConfirm(false);
   };
 
   if (loading) return <div>Loading events...</div>;
@@ -71,13 +91,28 @@ export default function Events() {
             <h3>{event.name}</h3>
             <p>Date: {event.date}</p>
             <p>Tickets Available: {event.num_tickets}</p>
-            <button
-              onClick={() => buyTicket(event.id)}
+
+            {!confirm && <button
+              onClick={() => confirmToggle(event.id, true)}
               disabled={event.num_tickets <= 0}
               aria-label={`Buy 1 ticket for ${event.name}, ${event.num_tickets} tickets remaining`}
             >
               Buy Ticket
-            </button>
+            </button>}
+
+            {confirm && <button
+                onClick={() => buyTicket(event.id)}
+                aria-label="Confirm purchase"
+            >
+                Yes
+            </button>}
+
+            {confirm && <button
+                onClick={() => confirmToggle(event.id, false)}
+                aria-label="Deny purchase"
+            >
+                No
+            </button>}
           </li>
         ))}
       </ul>

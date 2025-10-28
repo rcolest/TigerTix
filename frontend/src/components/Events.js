@@ -6,6 +6,7 @@ export default function Events() {
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [confirmId, setConfirmId] = useState(-1);
+  const [usingChatbot, setUsingChatbot] = useState(false);
 
   const clientUrl = "http://localhost:6001/api/events";
 
@@ -86,6 +87,12 @@ export default function Events() {
   return (
     <div>
       <h2>Campus Events</h2>
+      {!usingChatbot && <button
+        onClick={() => setUsingChatbot(true)}
+        aria-label="Use the chatbot"
+      >
+        Try our chatbot!
+      </button>}
       {message && <p role="status">{message}</p>}
       <ul>
         {events.map((event) => (

@@ -82,6 +82,32 @@ export default function Events() {
       setConfirm(false);
   };
 
+    const triggerChatbot = async () => {
+        let message = document.forms["chatbotBox"]["message"].value;
+        if (message === "")
+            return;
+
+        try {
+            const res = await fetch(`${clientUrl}/chatbot/${message}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+            const data = await res.json();
+
+            if (data.error) {
+                setMessage(`❌ ${data.error}`);
+                return;
+            }
+
+            setMessage(data);
+        }
+        catch (err) {
+            console.error("Error with chatbot: ", err);
+            setMessage("❌ Error with chatbot");
+        }
+        setUsingChatbot(false);
+    }
+
   if (loading) return <div>Loading events...</div>;
 
   return (
@@ -93,6 +119,12 @@ export default function Events() {
       >
         Try our chatbot!
       </button>}
+
+        {usingChatbot && <form name="chatbotBox" onSubmit={triggerChatbot}>
+        <input type="text" name="message"></input>
+        <input type="submit" value="Submit"></input>
+        </form>}
+
       {message && <p role="status">{message}</p>}
       <ul>
         {events.map((event) => (

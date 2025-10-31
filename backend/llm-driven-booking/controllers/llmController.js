@@ -1,26 +1,24 @@
-const llmModel = require('../models/llmModel');
+import * as llmModel from "../models/llmModel.js";
 
-exports.parseMessage = async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "Message required" });
-
+export const parseMessage = async (req, res) => {
   try {
-    const result = await llmModel.parseWithLLM(message);
-    return res.json(result);
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: "No message provided" });
+
+    const result = await llmModel.parseMessage(message);
+    res.json(result);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
-exports.confirmBooking = async (req, res) => {
-  const { event, tickets } = req.body;
-  if (!event || !tickets) {
-    return res.status(400).json({ error: "Event and ticket count required" });
-  }
-
+export const confirmBooking = async (req, res) => {
   try {
-    const result = await llmModel.bookTickets(event, tickets);
-    res.json(result);
+    const { event, tickets } = req.body;
+    if (!event || !tickets) return res.status(400).json({ error: "Missing event or tickets" });
+
+    const result = await llmModel.bookTicket(event, tickets);
+    res.json({ message: `✅ ${tickets} tickets booked for ${event}`, result });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

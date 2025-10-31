@@ -1,8 +1,9 @@
-const express = require('express');
+import express from "express";
+import { parseMessage, confirmBooking } from "../controllers/llmController.js";
+
 const router = express.Router();
-const llmController = require('../controllers/llmController');
 
-router.post('/parse', llmController.parseMessage);
-router.post('/confirm', llmController.confirmBooking);
+router.post("/parse", parseMessage);
+router.post("/confirm", confirmBooking);
 
-module.exports = router;
+export default router;

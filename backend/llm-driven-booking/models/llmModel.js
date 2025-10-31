@@ -1,73 +1,115 @@
-const ollame = require('ollama')
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
-const db = new sqlite3.Database(dbPath);
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-db.on('open', () => {
-  console.log(`✅ SQLite connected at ${dbPath}`);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) console.error('❌ Error connecting to database:', err.message);
+  else console.log(`✅ SQLite connected at ${dbPath}`);
 });
 
-exports.parseWithLLM = async (message) => {
-  try {
-    const response = await ollama.chat({
-      model: "llama3.1",
-      messages: [
-        { role: "system", content: "Extract event name, ticket count, and intent. Only output JSON like {intent: 'book', event: 'Jazz Night', tickets: 2}" },
-        { role: "user", content: message }
-      ],
-    });
-
-    return JSON.parse(response.message.content);
-  } catch (err) {
-    const fallback = parseFallback(message);
-    if (fallback) return fallback;
-    throw new Error("LLM could not parse message");
-  }
-};
-
-function parseFallback(text) {
-  const lower = text.toLowerCase();
-
-  if (lower.includes("book")) {
-    const num = parseInt(text);
-    return {
-      intent: "book",
-      event: extractEventName(text),
-      tickets: isNaN(num) ? 1 : num
-    };
-  }
-  return null;
-}
-
-const extractEventName = (text) => {
-  const words = text.split(" ");
-  return words.slice(-2).join(" ");
-};
-
-
-exports.bookTickets = (eventName, tickets) => {
+export const getAllEvents = () => {
   return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM events', [], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
+
+const wordToNumber = {
+  'a': 1,
+  'an': 1,
+  'one': 1,
+  'two': 2,
+  'three': 3,
+  'four': 4,
+  'five': 5,
+  'six': 6,
+  'seven': 7,
+  'eight': 8,
+  'nine': 9,
+  'ten': 10,
+};
+
+export const parseMessage = async (message) => {
+  if (!message) throw new Error('No message provided');
+
+  const lower = message.toLowerCase();
+  const events = await getAllEvents();
+
+  let matchedEvent = null;
+  for (const e of events) {
+    if (lower.includes(e.name.toLowerCase())) {
+      matchedEvent = e.name;
+      break;
+    }
+  }
+
+  if (!matchedEvent) {
+    return { intent: 'unknown', response: "Sorry, I didn't understand which event." };
+  }
+
+  let tickets = 1; 
+
+  const digitMatch = lower.match(/(\d+)/);
+  if (digitMatch) {
+    tickets = parseInt(digitMatch[1], 10);
+  } else {
+    for (const [word, num] of Object.entries(wordToNumber)) {
+      const regex = new RegExp(`\\b${word}\\b`, 'i'); 
+      if (regex.test(lower)) {
+        tickets = num;
+        break;
+      }
+    }
+  }
+
+  return {
+    intent: 'book',
+    event: matchedEvent,
+    tickets
+  };
+};
+
+export const bookTicket = async (eventName, tickets) => {
+  const events = await getAllEvents();
+  const event = events.find(e => e.name === eventName);
+  if (!event) throw new Error("Event not found");
+
+  const eventId = event.id;
+  let lastPurchase;
+
+  await new Promise((resolve, reject) => {
     db.serialize(() => {
       db.run("BEGIN TRANSACTION");
 
-      db.get("SELECT id, num_tickets FROM events WHERE name = ?", [eventName], (err, event) => {
-        if (err) return rollback(err);
-        if (!event) return rollback(new Error("Event not found"));
-        if (event.num_tickets < tickets) return rollback(new Error("Not enough tickets available"));
+      const purchaseLoop = (i) => {
+        if (i >= tickets) {
+          db.run("COMMIT", (err) => (err ? reject(err) : resolve()));
+          return;
+        }
 
-        db.run("UPDATE events SET num_tickets = num_tickets - ? WHERE id = ?", [tickets, event.id], (err2) => {
-          if (err2) return rollback(err2);
+        db.get('SELECT num_tickets FROM events WHERE id = ?', [eventId], (err, row) => {
+          if (err) return db.run("ROLLBACK", () => reject(err));
+          if (!row) return db.run("ROLLBACK", () => reject(new Error('Event not found')));
+          if (row.num_tickets <= 0) return db.run("ROLLBACK", () => reject(new Error('No tickets left')));
 
-          db.run("COMMIT");
-          resolve({ message: "✅ Tickets booked", event: eventName, tickets });
+          const newCount = row.num_tickets - 1;
+          db.run('UPDATE events SET num_tickets = ? WHERE id = ?', [newCount, eventId], (err) => {
+            if (err) return db.run("ROLLBACK", () => reject(err));
+            lastPurchase = { id: eventId, num_tickets: newCount };
+            purchaseLoop(i + 1);
+          });
         });
-      });
+      };
 
-      function rollback(e) {
-        db.run("ROLLBACK");
-        reject(e);
-      }
+      purchaseLoop(0);
     });
   });
+
+  return lastPurchase;
 };

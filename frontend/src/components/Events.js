@@ -33,6 +33,8 @@ export default function Events() {
 
   useEffect(() => {
     fetchEvents();
+    const interval = setInterval(fetchEvents, 1000); 
+    return () => clearInterval(interval); 
   }, []);
 
   /*

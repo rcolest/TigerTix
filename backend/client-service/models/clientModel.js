@@ -26,15 +26,26 @@ exports.getAllEvents = (callback) => {
  * 400 client error if the ticket is unable to be deducted, such as having no tickets remaining or the event ID not existing.
 */
 exports.purchaseTicket = (eventId, callback) => {
-  db.get('SELECT num_tickets FROM events WHERE id = ?', [eventId], (err, row) => {
+  const sql = `
+    UPDATE events
+    SET num_tickets = num_tickets - 1
+    WHERE id = ? AND num_tickets > 0
+  `;
+  
+  db.run(sql, [eventId], function(err) {
     if (err) return callback(err);
-    if (!row) return callback(new Error('Event not found'));
-    if (row.num_tickets <= 0) return callback(new Error('No tickets left'));
 
-    const newCount = row.num_tickets - 1;
-    db.run('UPDATE events SET num_tickets = ? WHERE id = ?', [newCount, eventId], function(err) {
-      if (err) return callback(err);
-      callback(null, { id: eventId, num_tickets: newCount });
+    if (this.changes === 0) {
+      return db.get('SELECT id FROM events WHERE id = ?', [eventId], (err2, row) => {
+        if (err2) return callback(err2);
+        if (!row) return callback(new Error('Event not found'));
+        return callback(new Error('No tickets left'));
+      });
+    }
+
+    db.get('SELECT num_tickets FROM events WHERE id = ?', [eventId], (err2, row) => {
+      if (err2) return callback(err2);
+      callback(null, { id: eventId, num_tickets: row.num_tickets });
     });
   });
 };

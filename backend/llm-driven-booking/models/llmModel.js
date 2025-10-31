@@ -76,40 +76,44 @@ export const parseMessage = async (message) => {
 };
 
 export const bookTicket = async (eventName, tickets) => {
-  const events = await getAllEvents();
-  const event = events.find(e => e.name === eventName);
-  if (!event) throw new Error("Event not found");
-
-  const eventId = event.id;
-  let lastPurchase;
-
-  await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     db.serialize(() => {
-      db.run("BEGIN TRANSACTION");
+      db.run('BEGIN TRANSACTION');
 
-      const purchaseLoop = (i) => {
-        if (i >= tickets) {
-          db.run("COMMIT", (err) => (err ? reject(err) : resolve()));
-          return;
+      db.get('SELECT id, num_tickets FROM events WHERE name = ?', [eventName], (err, row) => {
+        if (err) {
+          db.run('ROLLBACK');
+          return reject(err);
+        }
+        if (!row) {
+          db.run('ROLLBACK');
+          return reject(new Error('Event not found'));
+        }
+        if (row.num_tickets < tickets) {
+          db.run('ROLLBACK');
+          return reject(new Error('Not enough tickets left'));
         }
 
-        db.get('SELECT num_tickets FROM events WHERE id = ?', [eventId], (err, row) => {
-          if (err) return db.run("ROLLBACK", () => reject(err));
-          if (!row) return db.run("ROLLBACK", () => reject(new Error('Event not found')));
-          if (row.num_tickets <= 0) return db.run("ROLLBACK", () => reject(new Error('No tickets left')));
+        const newCount = row.num_tickets - tickets;
+        db.run(
+          'UPDATE events SET num_tickets = ? WHERE id = ?',
+          [newCount, row.id],
+          function (err) {
+            if (err) {
+              db.run('ROLLBACK');
+              return reject(err);
+            }
 
-          const newCount = row.num_tickets - 1;
-          db.run('UPDATE events SET num_tickets = ? WHERE id = ?', [newCount, eventId], (err) => {
-            if (err) return db.run("ROLLBACK", () => reject(err));
-            lastPurchase = { id: eventId, num_tickets: newCount };
-            purchaseLoop(i + 1);
-          });
-        });
-      };
-
-      purchaseLoop(0);
+            db.run('COMMIT', (err) => {
+              if (err) {
+                db.run('ROLLBACK');
+                return reject(err);
+              }
+              resolve({ id: row.id, num_tickets: newCount });
+            });
+          }
+        );
+      });
     });
   });
-
-  return lastPurchase;
 };

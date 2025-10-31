@@ -79,9 +79,41 @@ export default function Events() {
     setConfirm(false);
   };
 
+  /*
+  * Sends the user’s chatbot input to the LLM or handles simple keyword-based commands.
+  * INPUTS:
+  * e - The form submission event (used to prevent default form behavior).
+  * RETURNS: None directly; updates component state with messages, pending bookings, and confirmation flags.
+  * Handles:
+  *  - Greetings (e.g., "hi", "hello") by showing a welcome message.
+  *  - Event listing requests (e.g., "show events") by refreshing and displaying available events.
+  *  - Help requests by showing usage instructions.
+  *  - Booking requests via the LLM endpoint, setting pending bookings and prompting for confirmation.
+  *  - Errors in fetching or parsing the LLM response.
+  */
   const triggerChatbot = async (e) => {
     e.preventDefault();
     if (!chatInput) return;
+
+    const lower = chatInput.toLowerCase().trim();
+
+    const greetings = ["hi", "hello", "hey", "good morning", "good afternoon"];
+    if (greetings.some(g => lower.startsWith(g))) {
+      setMessage("🤖 Hello! I’m your ticket assistant. You can ask me to book tickets for campus events.");
+      return;
+    }
+
+    const showEventsKeywords = ["list events", "show events", "available events", "events"];
+    if (showEventsKeywords.some(k => lower.includes(k))) {
+      setMessage("🤖 Here are the available events:");
+      fetchEvents(); 
+      return;
+    }
+
+    if (lower.includes("help")) {
+      setMessage("🤖 You can type things like 'Book two tickets for Jazz Night' or 'Show events'.");
+      return;
+    }
 
     try {
       const res = await fetch(`${llmUrl}/parse`, {
@@ -116,6 +148,16 @@ export default function Events() {
     }
   };
 
+  /*
+  * Confirms a pending LLM-initiated ticket booking and updates the backend.
+  * INPUTS: None directly; relies on the `pendingBooking` state.
+  * RETURNS: None directly; updates component state with messages, clears pending booking, resets confirmation flags, and refreshes the event list.
+  * Handles:
+  *  - Sending the pending booking to the LLM confirmation endpoint.
+  *  - Displaying success or error messages based on the response.
+  *  - Clearing pending booking and confirmation UI state.
+  *  - Refreshing available events to reflect the updated ticket counts.
+  */
   const confirmLLMBooking = async () => {
     if (!pendingBooking) return;
 

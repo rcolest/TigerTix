@@ -18,7 +18,7 @@ export const confirmBooking = async (req, res) => {
     if (!event || !tickets) return res.status(400).json({ error: "Missing event or tickets" });
 
     const result = await llmModel.bookTicket(event, tickets);
-    res.json({ message: `✅ ${tickets} tickets booked for ${event}`, result });
+    res.json({ message: `${tickets} tickets booked for ${event}`, result });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

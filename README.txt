@@ -14,3 +14,4 @@ Open a new terminal in the frontend folder and enter:
 >Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 >npm start
 (This sometimes takes a second)
+If you want to run tests, use "npm test" instead of "npm start"

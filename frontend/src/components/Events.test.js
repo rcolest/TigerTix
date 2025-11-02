@@ -22,6 +22,23 @@ test('Confirmation', async () => {
     expect(confirmbutton[0]).toBeVisible();
 });
 
+test('Book ticket', async () => {
+    render(<Events />);
+    await screen.findByText("Campus Events");
+
+    const res = await fetch("http://localhost:6001/api/events");
+    const eventData = await res.json();
+    const expectedTickets = eventData[0].num_tickets;
+
+    const ticketOptions = await screen.findAllByText("Buy Ticket");
+    await userEvent.click(ticketOptions[0]);
+    const confirmbutton = screen.getAllByText('Yes');
+    await userEvent.click(confirmbutton[0]);
+
+    const newAmount = screen.getByText(`Tickets Available: ${expectedTickets}`);
+    expect(newAmount).toBeInTheDocument();
+});
+
 test('Chatbot function', async () => {
     render(<Events />);
     await screen.findByText("Campus Events");
@@ -31,7 +48,7 @@ test('Chatbot function', async () => {
     const chatbotText = screen.getByRole('textbox');
     await userEvent.click(chatbotText);
     await userEvent.keyboard('book basketball game');
-    await userEvent.click(screen.getByRole('button', {name: 'Submit'}));
+    await userEvent.click(screen.getByLabelText('Submit'));
 
     const message = screen.getAllByText('Yes');
     expect(message[0]).toBeVisible();

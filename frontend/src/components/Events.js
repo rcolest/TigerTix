@@ -411,13 +411,16 @@ export default function Events() {
 
       {usingChatbot && (
         <form name="chatbotBox" onSubmit={triggerChatbot}>
+          <label for="message">Enter input:</label>
           <input
             type="text"
+            id="message"
             name="message"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
           />
-          <input type="submit" value="Submit" />
+          <label for="submission">Submit</label>
+          <input id="submission" name="submission" type="submit" value="Submit" />
         </form>
       )}
 

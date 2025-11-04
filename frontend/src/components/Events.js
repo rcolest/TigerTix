@@ -15,6 +15,8 @@ export default function Events() {
 
   const [chatHistory, setChatHistory] = useState([]);
 
+  const [voiceMode, setVoiceMode] = useState(false);
+
   const llmControllerRef = useRef(null);
 
   const clientUrl = "http://localhost:6001/api/events";
@@ -41,7 +43,7 @@ export default function Events() {
     fetchEvents();
     const interval = setInterval(fetchEvents, 1000);
 
-    if (message) {
+    if (message && voiceMode) {
       speakMessage(message);
     }
 
@@ -106,6 +108,7 @@ export default function Events() {
   */
   const triggerChatbot = async (e) => {
     e.preventDefault();
+    setVoiceMode(false);
     if (!chatInput) return;
 
     const lower = chatInput.toLowerCase().trim();
@@ -228,6 +231,7 @@ export default function Events() {
   *  - Reporting errors if voice recognition fails.
   */
   const startVoiceCapture = () => {
+    setVoiceMode(true); 
     setChatHistory([]);
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Your browser does not support voice input.");
@@ -392,7 +396,7 @@ export default function Events() {
     <div>
       <h2>Campus Events</h2>
 
-      {!usingChatbot && (
+      {!usingChatbot ? (
         <>
           <button
             onClick={() => {
@@ -406,6 +410,10 @@ export default function Events() {
             🎤 Speak
           </button>
         </>
+      ) : (
+        <button onClick={startVoiceCapture} aria-label="Use voice input" style={{ marginLeft: "10px" }}>
+          🎤 Speak
+        </button>
       )}
 
 

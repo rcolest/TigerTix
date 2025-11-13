@@ -3,7 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
+  const [loginAccount, setLoginAccount] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [confirmId, setConfirmId] = useState(-1);
   const [usingChatbot, setUsingChatbot] = useState(false);
@@ -172,6 +174,7 @@ export default function Events() {
       console.error("Error with chatbot:", err);
       setMessage("Error with chatbot");
     }
+    setUsingChatbot(false);
   };
 
   /*
@@ -213,8 +216,6 @@ export default function Events() {
       setConfirmId(-1);
     }
   };
-
-  if (loading) return <div>Loading events...</div>;
 
   /*
   * Captures voice input from the user and either transcribes it to the chatbot
@@ -368,6 +369,7 @@ export default function Events() {
       console.error("Error with chatbot:", err);
       setMessage("Error with chatbot");
     }
+    setUsingChatbot(false);
   };
 
   /*
@@ -391,10 +393,84 @@ export default function Events() {
     window.speechSynthesis.speak(utterance);
   };
 
+  /*
+  * Checks the user's email and password combination when logging in, then enables the main display if it is determined it is a valid login.
+  * INPUTS:
+  *  e - The form submission event (used to prevent default form behavior).
+  * RETURNS: None directly; updates component state by setting login and logged in account states.
+  */
+  const attemptLogin = async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // TODO: Add the actual logic for determining if an email-password combo is valid
+      /*
+      if (email is not in database)
+        add email+password combo to database
+      else if (email is in database && password for email does not match)
+      {
+        setMessage("Incorrect password. Please try again.")
+        return;
+      }
+      */
+
+      setLoggedIn(true);
+      setLoginAccount(email);
+  }
+
+  /*
+  * Logs out the user from the website, returning them to the login screen.
+  * INPUTS: None directly; triggered by a button click.
+  * RETURNS: None directly; updates component state by setting login and logged in account states, and resetting the generic message.
+  */
+  const logout = () => {
+      setMessage("");
+      setLoggedIn(false);
+      setLoginAccount("");
+  }
+
+  if (loading) return <div>Loading events...</div>;
+
+  if (!loggedIn)
+  {
+      return (
+          <div>
+              <h2>TigerTix Login</h2>
+              {message && <p role="status">{message}</p>}
+
+              <form name="login" onSubmit={attemptLogin}>
+                  <label for="email">Email</label>
+                  <input
+                  type="text"
+                  id="email"
+                  name="email"
+                  />
+                  <label for="password">Password</label>
+                  <input
+                  type="text"
+                  id="password"
+                  name="password"
+                  />
+                  <label for="submission">Submit</label>
+                  <input type="submit" name="submission" value="Submit" />
+              </form>
+          </div>
+      );
+  }
 
   return (
     <div>
       <h2>Campus Events</h2>
+      {loginAccount && (
+        <>
+          <form name="loggedin" onSubmit={logout}>
+            <p role="status">{`Logged in as ${loginAccount}`}</p>
+            <input type="submit" name="submission" value="Log Out" />
+          </form>
+        </>
+      )}
 
       {!usingChatbot ? (
         <>

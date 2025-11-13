@@ -23,6 +23,7 @@ export default function Events() {
 
   const clientUrl = "http://localhost:6001/api/events";
   const llmUrl = "http://localhost:7001/api/llm";
+  const userLoginUrl = "http://localhost:8001/api/login";
 
   /*
   * Loads in the list of events to display to the end user.
@@ -405,19 +406,28 @@ export default function Events() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      // TODO: Add the actual logic for determining if an email-password combo is valid
-      /*
-      if (email is not in database)
-        add email+password combo to database
-      else if (email is in database && password for email does not match)
-      {
-        setMessage("Incorrect password. Please try again.")
-        return;
-      }
-      */
+      // Here lies logic for logging in
+      // TODO: Add the logic for registering an account
+      try {
+          const res = await fetch(`${userLoginUrl}/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username: email, password: password })
+          });
+          const data = await res.json();
 
-      setLoggedIn(true);
-      setLoginAccount(email);
+          if (data.error) {
+              setMessage(`${data.error}`);
+              return;
+          }
+
+          setLoggedIn(true);
+          setLoginAccount(email);
+      }
+      catch (err) {
+          console.error(err);
+          setMessage("Error logging in");
+      }
   }
 
   /*

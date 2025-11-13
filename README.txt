@@ -10,6 +10,10 @@ Open a terminal in backend/llm-driven-booking and enter:
 node server.js
 
 3.
+Open a terminal in backend/user-authentication and enter:
+node server.js
+
+4.
 Open a new terminal in the frontend folder and enter:
 >Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 >npm start

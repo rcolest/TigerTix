@@ -4,3 +4,9 @@ CREATE TABLE IF NOT EXISTS events (
     date TEXT NOT NULL,
     num_tickets INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS savedaccounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL
+);

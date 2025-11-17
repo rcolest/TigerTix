@@ -4,6 +4,8 @@ import sqlite3 from "sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { verifyToken } from './middleware/authMiddleware.js';
 
 const app = express();
 
@@ -13,6 +15,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+app.get('/api/protected', verifyToken, (req, res) => {
+  res.json({ message: `Hello ${req.user.username}, this is protected!` });
+});
 
 const CLIENT_URL = "http://localhost:6001"; 
 
@@ -63,6 +69,8 @@ app.post("/api/register", async (req, res) => {
   });
 });
 
+const SECRET_KEY = 'my_evil_super_secret_key';
+
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -73,9 +81,12 @@ app.post("/api/login", (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: "Invalid username or password" });
 
+    const token = jwt.sign({ username: user.username}, SECRET_KEY, { expiresIn: '30m' });
+    res.cookie("token", token, { httpOnly: true });
     res.json({ message: "Login successful" });
   });
 });
+
 
 app.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out" });

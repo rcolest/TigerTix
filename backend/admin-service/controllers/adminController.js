@@ -1,4 +1,4 @@
-const adminModel = require('../models/adminModel');
+import * as adminModel from '../models/adminModel.js';
 
 /* Creates a new event, and adds it to the database.
  * INPUTS:
@@ -8,7 +8,7 @@ const adminModel = require('../models/adminModel');
  * 201 success code if the event is added.
  * 500 server error if the database is unable to add the event.
 */
-exports.addEvent = (req, res) => {
+export const addEvent = (req, res) => {
   const { name, date, num_tickets } = req.body;
 
   if (!name || !date || !num_tickets) {
@@ -29,7 +29,7 @@ exports.addEvent = (req, res) => {
  * A list of all events in the database.
  * Will result in a 500 server error if the database is unable to list its events.
 */
-exports.getEvents = (req, res) => {
+export const getEvents = (req, res) => {
   adminModel.getAllEvents((err, rows) => {
     if (err) {
       console.error('🧠 Database error:', err.message);

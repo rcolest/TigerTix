@@ -1,8 +1,82 @@
-const express = require('express');
+import express from "express";
+import sqlite3 from "sqlite3";
+import path from "path";
+import { fileURLToPath } from "url";
+
 const router = express.Router();
-const clientController = require('../controllers/clientController');
 
-router.get('/events', clientController.getEvents);
-router.post('/events/:id/purchase', clientController.purchaseEvent);
+const USER_AUTH_URL = "http://localhost:8001"; 
 
-module.exports = router;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
+console.log("DB Path:", dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+    console.error("Failed to open database:", err.message);
+  } else {
+    console.log("Database opened successfully");
+  }
+});
+
+router.post("/register", async (req, res) => {
+    try {
+        const response = await fetch(`${USER_AUTH_URL}/api/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(req.body),
+            credentials: "include"
+        });
+        const data = await response.json();
+        return res.status(response.status).json(data);
+    } catch (err) {
+        return res.status(500).json({ message: "Proxy error" });
+    }
+});
+
+router.post("/login", async (req, res) => {
+    try {
+        const response = await fetch(`${USER_AUTH_URL}/api/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(req.body),
+            credentials: "include"
+        });
+        const data = await response.json();
+        return res.status(response.status).json(data);
+    } catch (err) {
+        return res.status(500).json({ message: "Proxy error" });
+    }
+});
+
+router.get("/events", (req, res) => {
+    db.all("SELECT * FROM events", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+router.post("/:id/purchase", (req, res) => {
+    const eventId = req.params.id;
+
+    db.get("SELECT num_tickets FROM events WHERE id = ?", [eventId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Event not found" });
+        if (row.num_tickets <= 0) return res.status(400).json({ error: "No tickets left" });
+
+        db.run(
+            "UPDATE events SET num_tickets = num_tickets - 1 WHERE id = ?",
+            [eventId],
+            function (updateErr) {
+                if (updateErr) return res.status(500).json({ error: updateErr.message });
+
+                db.get("SELECT * FROM events WHERE id = ?", [eventId], (getErr, updatedRow) => {
+                    if (getErr) return res.status(500).json({ error: getErr.message });
+                    res.json({ event: updatedRow });
+                });
+            }
+        );
+    });
+});
+
+export default router;

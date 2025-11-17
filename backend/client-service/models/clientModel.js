@@ -1,10 +1,18 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) console.error('❌ Error connecting to database:', err.message);
-  else console.log('✅ Client DB connected');
+console.log("DB Path:", dbPath);
+const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+        console.error("Failed to connect to DB:", err.message);
+    } else {
+        console.log("Connected to SQLite database");
+    }
 });
 
 /* Prints a list of every event in the database.
@@ -12,7 +20,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
  * A list of all events in the database.
  * Will result in a 500 server error if the database is unable to list its events.
 */
-exports.getAllEvents = (callback) => {
+export const getAllEvents = (callback) => {
   db.all('SELECT * FROM events', [], (err, rows) => {
     callback(err, rows);
   });
@@ -25,7 +33,7 @@ exports.getAllEvents = (callback) => {
  * The new number of tickets remaining in the event.
  * 400 client error if the ticket is unable to be deducted, such as having no tickets remaining or the event ID not existing.
 */
-exports.purchaseTicket = (eventId, callback) => {
+export const purchaseTicket = (eventId, callback) => {
   const sql = `
     UPDATE events
     SET num_tickets = num_tickets - 1

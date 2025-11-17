@@ -2,10 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 
 export default function Events() {
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
-  const [loginAccount, setLoginAccount] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [confirmId, setConfirmId] = useState(-1);
   const [usingChatbot, setUsingChatbot] = useState(false);
@@ -17,13 +15,18 @@ export default function Events() {
 
   const [chatHistory, setChatHistory] = useState([]);
 
-  const [voiceMode, setVoiceMode] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [regUsername, setRegUsername] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   const llmControllerRef = useRef(null);
 
-  const clientUrl = "http://localhost:6001/api/events";
   const llmUrl = "http://localhost:7001/api/llm";
-  const userLoginUrl = "http://localhost:8001/api/login";
+
+  const clientUrl = "http://localhost:6001/api";
+
 
   /*
   * Loads in the list of events to display to the end user.
@@ -32,26 +35,28 @@ export default function Events() {
   */
   const fetchEvents = async () => {
     try {
-      const res = await fetch(clientUrl);
+      const res = await fetch("http://localhost:8001/api/events", {
+        credentials: "include"
+      });
+
+      if (!res.ok) {
+        setMessage("Failed to load events");
+        setEvents([]);
+        return;
+      }
+
       const data = await res.json();
-      setEvents(data);
-      setLoading(false);
+      setEvents(data); 
     } catch (err) {
       console.error("Error fetching events:", err);
-      setMessage("Failed to load events");
+      setMessage("Error fetching events");
+      setEvents([]);
     }
   };
 
   useEffect(() => {
     fetchEvents();
-    const interval = setInterval(fetchEvents, 1000);
-
-    if (message && voiceMode) {
-      speakMessage(message);
-    }
-
-    return () => clearInterval(interval);
-  }, [message]);
+  }, []);
 
   /*
   * Toggles the state of displaying the confirmation buttons.
@@ -67,6 +72,51 @@ export default function Events() {
   };
 
   /*
+  * Handles user registration by sending a POST request to the backend.
+  * INPUTS:
+  * e - The form submission event (used to prevent default form behavior).
+  * RETURNS: None directly; updates component state with success or error messages.
+  */
+  const attemptRegister = async (e) => {
+    e.preventDefault();
+    console.log("Registering user"); 
+    const username = regUsername;
+    const password = regPassword;
+
+    if (!username || !password) {
+      setMessage("Please enter both an email and a password.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.error || "Error registering");
+        return;
+      }
+
+      setMessage("Registration successful! Please log in.");
+      setShowRegister(false);
+      setRegUsername("");
+      setRegPassword("");
+    } catch (err) {
+      console.error(err);
+      setMessage("Error registering");
+    }
+  };
+
+
+
+
+  /*
   * Attempts to purchase a ticket from a specific event.
   * INPUTS:
   * id - The ID of the event which is being purchased from.
@@ -78,7 +128,10 @@ export default function Events() {
       const res = await fetch(`${clientUrl}/${id}/purchase`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include"
       });
+
+
       const data = await res.json();
 
       if (data.error) {
@@ -111,7 +164,6 @@ export default function Events() {
   */
   const triggerChatbot = async (e) => {
     e.preventDefault();
-    setVoiceMode(false);
     if (!chatInput) return;
 
     const lower = chatInput.toLowerCase().trim();
@@ -233,7 +285,6 @@ export default function Events() {
   *  - Reporting errors if voice recognition fails.
   */
   const startVoiceCapture = () => {
-    setVoiceMode(true); 
     setChatHistory([]);
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Your browser does not support voice input.");
@@ -374,109 +425,134 @@ export default function Events() {
   };
 
   /*
-  * Converts text responses into spoken audio for accessible interaction.
-  * INPUTS:
-  *  text - The string to be spoken aloud to the user.
-  * RETURNS: None; triggers Web Speech Synthesis to speak the message.
-  * Handles:
-  *  - Creating a SpeechSynthesisUtterance with chosen language, pitch, and rate.
-  *  - Ensuring clear auditory feedback for users who cannot rely on visual UI.
-  * Accessibility Focus:
-  *  - Provides auditory output to support visually impaired users and reduce cognitive effort.
-  */
-  const speakMessage = (text) => {
-    if (!window.speechSynthesis) return;
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    window.speechSynthesis.speak(utterance);
-  };
-
-  /*
   * Checks the user's email and password combination when logging in, then enables the main display if it is determined it is a valid login.
   * INPUTS:
   *  e - The form submission event (used to prevent default form behavior).
   * RETURNS: None directly; updates component state by setting login and logged in account states.
   */
   const attemptLogin = async (e) => {
-      e.preventDefault();
+    e.preventDefault();
 
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+    const username = loginUsername; 
+    const password = loginPassword;
 
-      // Here lies logic for logging in
-      // TODO: Add the logic for registering an account
-      try {
-          const res = await fetch(`${userLoginUrl}/login`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username: email, password: password })
-          });
-          const data = await res.json();
+    if (!username || !password) {
+        setMessage("Please enter a username and password");
+        return;
+    }
 
-          if (data.error) {
-              setMessage(`${data.error}`);
-              return;
-          }
+    try {
+        const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ username, password })
+        });
 
-          setLoggedIn(true);
-          setLoginAccount(email);
-      }
-      catch (err) {
-          console.error(err);
-          setMessage("Error logging in");
-      }
-  }
+        const data = await res.json();
+
+        if (!res.ok) {
+            setMessage(data.error || "Login failed");
+            return;
+        }
+
+        setLoggedIn(true);
+        setLoginUsername(username);
+        setMessage("Login successful!");
+    } catch (err) {
+        console.error(err);
+        setMessage("Error logging in");
+    }
+};
+
+
 
   /*
   * Logs out the user from the website, returning them to the login screen.
   * INPUTS: None directly; triggered by a button click.
   * RETURNS: None directly; updates component state by setting login and logged in account states, and resetting the generic message.
   */
-  const logout = () => {
-      setMessage("");
-      setLoggedIn(false);
-      setLoginAccount("");
-  }
+  const logout = async (e) => {
+    e.preventDefault();
 
-  if (loading) return <div>Loading events...</div>;
+    try {
+      await fetch("http://localhost:8001/api/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+
+      setLoggedIn(false);
+      setLoginUsername("");
+      setMessage("Logged out");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      setMessage("Logout failed");
+    }
+  };
+
+  console.log("showRegister:", showRegister);
 
   if (!loggedIn)
   {
       return (
           <div>
-              <h2>TigerTix Login</h2>
-              {message && <p role="status">{message}</p>}
+            <h2>{showRegister ? "Register" : "TigerTix Login"}</h2>
+            {message && <p role="status">{message}</p>}
 
-              <form name="login" onSubmit={attemptLogin}>
-                  <label for="email">Email</label>
-                  <input
+            {showRegister ? (
+              <form onSubmit={attemptRegister}>
+                <label>Email</label>
+                <input
                   type="text"
-                  id="email"
-                  name="email"
-                  />
-                  <label for="password">Password</label>
-                  <input
-                  type="text"
-                  id="password"
-                  name="password"
-                  />
-                  <label for="submission">Submit</label>
-                  <input type="submit" name="submission" value="Submit" />
+                  value={regUsername}
+                  onChange={(e) => setRegUsername(e.target.value)}
+                />
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                />
+                <button type="submit">Register</button>
+                <p>
+                  Already have an account?{" "}
+                  <button type="button" onClick={() => setShowRegister(false)}>Login</button>
+                </p>
               </form>
+            ) : (
+              <form onSubmit={attemptLogin}>
+                <label>Email</label>
+                <input
+                  type="text"
+                  value={loginUsername}  
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                />
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={loginPassword}   
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+                <button type="submit">Login</button>
+                <p>
+                  Don't have an account?{" "}
+                  <button type="button" onClick={() => setShowRegister(true)}>Register</button>
+                </p>
+              </form>
+            )}
+
           </div>
+
       );
   }
 
   return (
     <div>
       <h2>Campus Events</h2>
-      {loginAccount && (
+      {loginUsername && (
         <>
           <form name="loggedin" onSubmit={logout}>
-            <p role="status">{`Logged in as ${loginAccount}`}</p>
+            <p role="status">{`Logged in as ${loginUsername}`}</p>
             <input type="submit" name="submission" value="Log Out" />
           </form>
         </>

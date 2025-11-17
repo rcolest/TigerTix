@@ -1,7 +1,7 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const adminRoutes = require('./routes/adminRoutes');
-const { execSync } = require('child_process');
+import express from 'express';
+import bodyParser from 'body-parser';
+import adminRoutes from './routes/adminRoutes.js';
+import { execSync } from 'child_process';
 
 const app = express();
 const PORT = 5001;

@@ -1,11 +1,11 @@
-const clientModel = require('../models/clientModel');
+import * as clientModel from '../models/clientModel.js';
 
 /* Prints a list of every event in the database.
  * RETURNS:
  * A list of all events in the database.
  * Will result in a 500 server error if the database is unable to list its events.
 */
-exports.getEvents = (req, res) => {
+export const getEvents = (req, res) => {
   clientModel.getAllEvents((err, events) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(events);
@@ -20,7 +20,7 @@ exports.getEvents = (req, res) => {
  * 200 success code if the ticket is deducted.
  * 400 client error if the ticket is unable to be deducted, such as having no tickets remaining.
 */
-exports.purchaseEvent = (req, res) => {
+export const purchaseEvent = (req, res) => {
   const eventId = parseInt(req.params.id);
   clientModel.purchaseTicket(eventId, (err, result) => {
     if (err) return res.status(400).json({ error: err.message });

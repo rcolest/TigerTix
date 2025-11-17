@@ -1,6 +1,6 @@
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
-const path = require('path');
+import sqlite3 from 'sqlite3';
+import fs from 'fs';
+import path from 'path';
 
 const dbPath = path.join(__dirname, '..', 'shared-db', 'database.sqlite');
 const initSqlPath = path.join(__dirname, '..', 'shared-db', 'init.sql');
@@ -23,4 +23,4 @@ db.exec(initSql, (err) => {
   }
 });
 
-module.exports = db
+export default db;

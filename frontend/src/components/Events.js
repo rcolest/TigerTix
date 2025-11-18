@@ -490,8 +490,6 @@ export default function Events() {
     }
   };
 
-  console.log("showRegister:", showRegister);
-
   if (!loggedIn)
   {
       return (
@@ -501,14 +499,16 @@ export default function Events() {
 
             {showRegister ? (
               <form onSubmit={attemptRegister}>
-                <label>Email</label>
+                <label for="email">Email</label>
                 <input
                   type="text"
+                  id="email"
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
                 />
-                <label>Password</label>
+                <label for="pass">Password</label>
                 <input
+                  id="pass"
                   type="password"
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
@@ -521,19 +521,22 @@ export default function Events() {
               </form>
             ) : (
               <form onSubmit={attemptLogin}>
-                <label>Email</label>
+                <label for="email">Email</label>
                 <input
+                  id="email"
                   type="text"
                   value={loginUsername}  
                   onChange={(e) => setLoginUsername(e.target.value)}
                 />
-                <label>Password</label>
+                <label for="pass">Password</label>
                 <input
+                  id="pass"
                   type="password"
                   value={loginPassword}   
                   onChange={(e) => setLoginPassword(e.target.value)}
                 />
-                <button type="submit">Login</button>
+                <label for="submission">Login Button</label>
+                <button id="submission" type="submit">Login</button>
                 <p>
                   Don't have an account?{" "}
                   <button type="button" onClick={() => setShowRegister(true)}>Register</button>

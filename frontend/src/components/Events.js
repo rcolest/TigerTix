@@ -27,6 +27,8 @@ export default function Events() {
 
   const clientUrl = "https://tigertix-0qva.onrender.com/api";
 
+  const BACKEND = process.env.REACT_APP_API_URL;
+  const LLM = process.env.REACT_APP_LLM_URL;
 
   /*
   * Loads in the list of events to display to the end user.

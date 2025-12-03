@@ -1,85 +1,135 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import Events from './Events';
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import Events from "./Events";
 
-test('Site loads', async () => {
-    render(<Events />);
-    // This line is needed to ensure the "loading" screen is gone
-    await screen.findByText("Login");
+beforeEach(() => {
+    global.fetch = jest.fn((url, options) => {
+        if (url.includes("/login")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ message: "Login successful" })
+            });
+        }
 
-    const speechButton = screen.getByText("Login");
-    expect(speechButton).toBeVisible();
+        if (url.includes("/register")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ message: "Register successful" })
+            });
+        }
+
+        if (url.includes("/events") && (!options || options.method === "GET")) {
+            return Promise.resolve({
+                ok: true,
+                json: () =>
+                    Promise.resolve([
+                        {
+                            id: 1,
+                            name: "Basketball Game",
+                            num_tickets: 10,
+                            description: "A fun event!"
+                        },
+                        {
+                            id: 2,
+                            name: "Concert",
+                            num_tickets: 5,
+                            description: "Music concert"
+                        }
+                    ])
+            });
+        }
+
+        if (url.includes("/purchase")) {
+            return Promise.resolve({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        event: {
+                            id: 1,
+                            name: "Basketball Game",
+                            num_tickets: 9
+                        }
+                    })
+            });
+        }
+
+        if (url.includes("/chatbot")) {
+            return Promise.resolve({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        reply: "Yes"
+                    })
+            });
+        }
+
+        return Promise.reject(new Error("Fetch URL not mocked: " + url));
+    });
 });
 
-test('Switch to register', async () => {
+
+test("Site loads", async () => {
     render(<Events />);
     await screen.findByText("Login");
-
-    const register = screen.getByText("Register");
-    await userEvent.click(register);
-
-    const switchButton = screen.getByText(`Already have an account?`);
-    expect(switchButton).toBeVisible();
+    expect(screen.getByText("Login")).toBeVisible();
 });
 
-test('Logging in', async () => {
+test("Switch to register", async () => {
+    render(<Events />);
+    await screen.findByText("Login");
+    await userEvent.click(screen.getByText("Register"));
+    expect(screen.getByText("Already have an account?")).toBeVisible();
+});
+
+test("Logging in", async () => {
     render(<Events />);
     await screen.findByText("Login");
 
-    const emailLogin = screen.getByLabelText("Email");
-    await userEvent.click(emailLogin);
-    await userEvent.keyboard('test-email@example.com');
-    const passLogin = screen.getByLabelText("Password");
-    await userEvent.click(passLogin);
-    await userEvent.keyboard('test-password');
+    await userEvent.type(screen.getByLabelText("Email"), "test@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "password");
 
-    const loginButton = screen.getByLabelText("Login Button");
-    await userEvent.click(loginButton);
+    await userEvent.click(screen.getByLabelText("Login Button"));
+
     await screen.findByText("Campus Events");
-
-    const header = screen.getByText("Campus Events");
-    expect(header).toBeVisible();
+    expect(screen.getByText("Campus Events")).toBeVisible();
 });
 
-test('Confirmation', async () => {
+test("Confirmation", async () => {
     render(<Events />);
     await screen.findByText("Login");
 
-    const ticketOptions = await screen.findAllByText("Buy Ticket");
-    await userEvent.click(ticketOptions[0]);
-    const confirmbutton = screen.getAllByText('Yes');
+    const buyButtons = await screen.findAllByText("Buy Ticket");
+    await userEvent.click(buyButtons[0]);
 
-    expect(confirmbutton[0]).toBeVisible();
+    const confirm = screen.getAllByText("Yes");
+    expect(confirm[0]).toBeVisible();
 });
 
-test('Book ticket', async () => {
+test("Book ticket", async () => {
     render(<Events />);
     await screen.findByText("Login");
 
-    const res = await fetch("http://localhost:6001/api/events");
-    const eventData = await res.json();
-    const expectedTickets = eventData[0].num_tickets;
+    const buyButtons = await screen.findAllByText("Buy Ticket");
+    await userEvent.click(buyButtons[0]);
 
-    const ticketOptions = await screen.findAllByText("Buy Ticket");
-    await userEvent.click(ticketOptions[0]);
-    const confirmbutton = screen.getAllByText('Yes');
-    await userEvent.click(confirmbutton[0]);
+    await userEvent.click(screen.getAllByText("Yes")[0]);
 
-    const newAmount = screen.getByText(`Tickets Available: ${expectedTickets}`);
-    expect(newAmount).toBeInTheDocument();
+    expect(
+        screen.getByText("Tickets Available: 9")
+    ).toBeInTheDocument();
 });
 
-test('Chatbot function', async () => {
+test("Chatbot function", async () => {
     render(<Events />);
     await screen.findByText("Login");
 
-    const chatbotButton = screen.getByText("Try our chatbot!");
-    await userEvent.click(chatbotButton);
-    const chatbotText = screen.getByRole('textbox');
-    await userEvent.click(chatbotText);
-    await userEvent.keyboard('book basketball game');
-    await userEvent.click(screen.getByLabelText('Submit'));
+    await userEvent.click(screen.getByText("Try our chatbot!"));
 
-    const message = screen.getAllByText('Yes');
-    expect(message[0]).toBeVisible();
+    const textbox = screen.getByRole("textbox");
+    await userEvent.type(textbox, "book basketball game");
+
+    await userEvent.click(screen.getByLabelText("Submit"));
+
+    const yes = await screen.findAllByText("Yes");
+    expect(yes[0]).toBeVisible();
 });

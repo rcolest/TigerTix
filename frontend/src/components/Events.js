@@ -12,7 +12,6 @@ export default function Events() {
   const [pendingBooking, setPendingBooking] = useState(null);
 
   const [awaitingVoiceConfirm, setAwaitingVoiceConfirm] = useState(false);
-
   const [chatHistory, setChatHistory] = useState([]);
 
   const [showRegister, setShowRegister] = useState(false);
@@ -22,33 +21,19 @@ export default function Events() {
   const [loginPassword, setLoginPassword] = useState("");
 
   const llmControllerRef = useRef(null);
-
   const llmUrl = "https://tigertix-0qva.onrender.com/api/llm";
-
   const clientUrl = "https://tigertix-0qva.onrender.com/api";
 
-  const BACKEND = process.env.REACT_APP_API_URL;
-  const LLM = process.env.REACT_APP_LLM_URL;
-
-  /*
-  * Loads in the list of events to display to the end user.
-  * INPUTS: None
-  * RETURNS: None
-  */
   const fetchEvents = async () => {
     try {
-      const res = await fetch("https://tigertix-0qva.onrender.com/api/events", {
-        credentials: "include"
-      });
-
+      const res = await fetch("https://tigertix-0qva.onrender.com/api/events", { credentials: "include" });
       if (!res.ok) {
         setMessage("Failed to load events");
         setEvents([]);
         return;
       }
-
       const data = await res.json();
-      setEvents(data); 
+      setEvents(data);
     } catch (err) {
       console.error("Error fetching events:", err);
       setMessage("Error fetching events");
@@ -56,40 +41,22 @@ export default function Events() {
     }
   };
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  useEffect(() => { fetchEvents(); }, []);
 
-  /*
-  * Toggles the state of displaying the confirmation buttons.
-  * INPUTS:
-  * id - The ID of the event which is being purchased from.
-  * confirm - The state to switch the confirmation to.
-  * RETURNS: A message about the switching of confirmation.
-  */
   const confirmToggle = (id, state) => {
     setConfirm(state);
     setConfirmId(state ? id : -1);
     if (!state) setMessage("Ticket purchase cancelled");
   };
 
-  /*
-  * Handles user registration by sending a POST request to the backend.
-  * INPUTS:
-  * e - The form submission event (used to prevent default form behavior).
-  * RETURNS: None directly; updates component state with success or error messages.
-  */
   const attemptRegister = async (e) => {
     e.preventDefault();
-    console.log("Registering user"); 
     const username = regUsername;
     const password = regPassword;
-
     if (!username || !password) {
       setMessage("Please enter both an email and a password.");
       return;
     }
-
     try {
       const res = await fetch("https://tigertix-0qva.onrender.com/api/register", {
         method: "POST",
@@ -97,14 +64,11 @@ export default function Events() {
         body: JSON.stringify({ username, password }),
         credentials: "include",
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setMessage(data.error || "Error registering");
         return;
       }
-
       setMessage("Registration successful! Please log in.");
       setShowRegister(false);
       setRegUsername("");
@@ -115,16 +79,6 @@ export default function Events() {
     }
   };
 
-
-
-
-  /*
-  * Attempts to purchase a ticket from a specific event.
-  * INPUTS:
-  * id - The ID of the event which is being purchased from.
-  * RETURNS: A message confirming the purchase of the ticket.
-  * Will error if the event ID does not exist, or if there are no more tickets left in that event.
-  */
   const buyTicket = async (id) => {
     try {
       const res = await fetch(`${clientUrl}/${id}/purchase`, {
@@ -132,15 +86,11 @@ export default function Events() {
         headers: { "Content-Type": "application/json" },
         credentials: "include"
       });
-
-
       const data = await res.json();
-
       if (data.error) {
         setMessage(`${data.error}`);
         return;
       }
-
       setEvents((prev) =>
         prev.map((e) => (e.id === id ? { ...e, num_tickets: data.event.num_tickets } : e))
       );
@@ -152,71 +102,40 @@ export default function Events() {
     setConfirm(false);
   };
 
-  /*
-  * Sends the user’s chatbot input to the LLM or handles simple keyword-based commands.
-  * INPUTS:
-  * e - The form submission event (used to prevent default form behavior).
-  * RETURNS: None directly; updates component state with messages, pending bookings, and confirmation flags.
-  * Handles:
-  *  - Greetings (e.g., "hi", "hello") by showing a welcome message.
-  *  - Event listing requests (e.g., "show events") by refreshing and displaying available events.
-  *  - Help requests by showing usage instructions.
-  *  - Booking requests via the LLM endpoint, setting pending bookings and prompting for confirmation.
-  *  - Errors in fetching or parsing the LLM response.
-  */
   const triggerChatbot = async (e) => {
     e.preventDefault();
     if (!chatInput) return;
-
     const lower = chatInput.toLowerCase().trim();
-
     const greetings = ["hi", "hello", "hey", "good morning", "good afternoon"];
     if (greetings.some(g => lower.startsWith(g))) {
       setMessage("Hello! I’m your ticket assistant. You can ask me to book tickets for campus events.");
       return;
     }
-
     const showEventsKeywords = ["list events", "show events", "available events", "events"];
     if (showEventsKeywords.some(k => lower.includes(k))) {
       setMessage("Here are the available events:");
-      fetchEvents(); 
+      fetchEvents();
       return;
     }
-
     if (lower.includes("help")) {
       setMessage("You can type things like 'Book two tickets for Jazz Night' or 'Show events'.");
       return;
     }
-
     try {
-      if (llmControllerRef.current) {
-        llmControllerRef.current.abort(); 
-      }
+      if (llmControllerRef.current) llmControllerRef.current.abort();
       llmControllerRef.current = new AbortController();
-
       const res = await fetch(`${llmUrl}/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: chatInput }),
-        signal: llmControllerRef.current.signal, 
+        signal: llmControllerRef.current.signal,
       });
-
-    llmControllerRef.current = null; 
-
+      llmControllerRef.current = null;
       const data = await res.json();
-
-      if (data.error) {
-        setMessage(`${data.error}`);
-        return;
-      }
-
+      if (data.error) { setMessage(`${data.error}`); return; }
       if (data.intent === "book") {
         const eventObj = events.find((e) => e.name.toLowerCase() === data.event.toLowerCase());
-        if (!eventObj) {
-          setMessage(`Event "${data.event}" not found`);
-          return;
-        }
-
+        if (!eventObj) { setMessage(`Event "${data.event}" not found`); return; }
         setPendingBooking({ event: eventObj.name, tickets: data.tickets });
         setConfirmId(eventObj.id);
         setConfirm(true);
@@ -232,33 +151,17 @@ export default function Events() {
     setUsingChatbot(false);
   };
 
-  /*
-  * Confirms a pending LLM-initiated ticket booking and updates the backend.
-  * INPUTS: None directly; relies on the `pendingBooking` state.
-  * RETURNS: None directly; updates component state with messages, clears pending booking, resets confirmation flags, and refreshes the event list.
-  * Handles:
-  *  - Sending the pending booking to the LLM confirmation endpoint.
-  *  - Displaying success or error messages based on the response.
-  *  - Clearing pending booking and confirmation UI state.
-  *  - Refreshing available events to reflect the updated ticket counts.
-  */
   const confirmLLMBooking = async () => {
     if (!pendingBooking) return;
-
     try {
       const res = await fetch(`${llmUrl}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pendingBooking),
       });
-
       const result = await res.json();
-      if (result.error) {
-        setMessage(`${result.error}`);
-      } else {
-        setMessage(result.message || "Booking complete!");
-      }
-
+      if (result.error) setMessage(`${result.error}`);
+      else setMessage(result.message || "Booking complete!");
       setPendingBooking(null);
       setConfirm(false);
       setConfirmId(-1);
@@ -272,143 +175,55 @@ export default function Events() {
     }
   };
 
-  /*
-  * Captures voice input from the user and either transcribes it to the chatbot
-  * or listens for voice confirmation of a pending LLM-initiated ticket booking.
-  * INPUTS: None directly; triggered by a button click.
-  * RETURNS: None directly; updates component state with messages, pending bookings,
-  *          confirmation flags, and chat input.
-  * Handles:
-  *  - Playing a short beep before recording.
-  *  - Transcribing spoken words into text and populating the chat input.
-  *  - Sending transcribed text to the LLM chatbot.
-  *  - Handling voice confirmation for pending bookings ("yes" to confirm, "no" to cancel).
-  *  - Re-prompting if voice input is not recognized.
-  *  - Reporting errors if voice recognition fails.
-  */
   const startVoiceCapture = () => {
     setChatHistory([]);
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Your browser does not support voice input.");
-
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = "en-US";
     recognition.maxAlternatives = 1;
-
     const beep = new Audio("/beep.mp3");
     beep.play();
-
     recognition.start();
-
-    /*
-    * Handles the speech recognition result event.
-    * INPUTS:
-    *  event - The SpeechRecognition result event containing detected transcript(s).
-    * RETURNS: None directly; triggers chatbot processing or confirmation workflow.
-    * Handles:
-    *  - Extracting the user's spoken transcript from recognition results.
-    *  - If awaiting booking confirmation, checks for "yes" or "no" responses.
-    *  - If not in confirmation mode, stores the voice transcript and triggers LLM processing.
-    *  - Updates chat history so visually impaired users receive confirmation of interpreted speech.
-    *  - Falls back to re-prompting voice input if the response is unclear.
-    */
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript.toLowerCase().trim();
-
       if (awaitingVoiceConfirm) {
-        if (transcript === "yes") {
-          confirmLLMBooking();
-          setAwaitingVoiceConfirm(false);
-        } else if (transcript === "no") {
-          confirmToggle(confirmId, false);
-          setPendingBooking(null);
-          setAwaitingVoiceConfirm(false);
-        } else {
-          setMessage(`Voice not recognized. Please say "yes" or "no".`);
-          startVoiceCapture();
-        }
+        if (transcript === "yes") { confirmLLMBooking(); setAwaitingVoiceConfirm(false); }
+        else if (transcript === "no") { confirmToggle(confirmId, false); setPendingBooking(null); setAwaitingVoiceConfirm(false); }
+        else { setMessage(`Voice not recognized. Please say "yes" or "no".`); startVoiceCapture(); }
       } else {
         setChatHistory(prev => [...prev, { from: "user", text: transcript }]);
         setChatInput(transcript);
         triggerChatbotVoice(transcript);
       }
-
     };
-
-    /*
-    * Handles speech recognition errors.
-    * INPUTS:
-    *  event - The SpeechRecognition error event object.
-    * RETURNS: None directly; sets an error message for the user.
-    * Handles:
-    *  - Logging speech recognition errors to the console for debugging.
-    *  - Informing the user that voice recognition failed and prompting retry.
-    * Accessibility Goal:
-    *  - Ensures visually impaired users receive clear feedback when speech input fails.
-    */
-    recognition.onerror = (event) => {
-      console.error("Voice recognition error:", event.error);
-      setMessage("Voice recognition failed");
-    };
+    recognition.onerror = (event) => { console.error("Voice recognition error:", event.error); setMessage("Voice recognition failed"); };
   };
 
-  /*
-  * Sends spoken user input to the LLM and processes the response.
-  * INPUTS:
-  *  text - The transcribed text from the user's speech input.
-  * RETURNS: None directly; updates chat history, pending bookings, and messages.
-  * Handles:
-  *  - Detecting simple voice commands such as greetings and event listing requests.
-  *  - Sending natural-language voice input to the LLM `/parse` endpoint.
-  *  - Displaying and speaking the LLM response for accessibility.
-  *  - Detecting booking intent, prompting for voice confirmation, and preventing auto-booking.
-  *  - Updating chat history to show both user and bot messages.
-  * Accessibility Focus:
-  *  - Supports non-visual interaction and reduces cognitive load by pairing text and speech output.
-  */
   const triggerChatbotVoice = async (text) => {
     const lower = text.toLowerCase().trim();
-
     const greetings = ["hi", "hello", "hey", "good morning", "good afternoon"];
-    if (greetings.some(g => lower.startsWith(g))) {
-      setMessage("Hello! I’m your ticket assistant. You can ask me to book tickets for campus events.");
-      return;
-    }
-
+    if (greetings.some(g => lower.startsWith(g))) { setMessage("Hello! I’m your ticket assistant. You can ask me to book tickets for campus events."); return; }
     const showEventsKeywords = ["list events", "show events", "available events", "events"];
-    if (showEventsKeywords.some(k => lower.includes(k))) {
-      setMessage("Here are the available events:");
-      fetchEvents();
-      return;
-    }
-
-    if (lower.includes("help")) {
-      setMessage("You can type things like 'Book two tickets for Jazz Night' or 'Show events'.");
-      return;
-    }
-
+    if (showEventsKeywords.some(k => lower.includes(k))) { setMessage("Here are the available events:"); fetchEvents(); return; }
+    if (lower.includes("help")) { setMessage("You can type things like 'Book two tickets for Jazz Night' or 'Show events'."); return; }
     try {
       if (llmControllerRef.current) llmControllerRef.current.abort();
       llmControllerRef.current = new AbortController();
-
       const res = await fetch(`${llmUrl}/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
         signal: llmControllerRef.current.signal
       });
-
       llmControllerRef.current = null;
       const data = await res.json();
-
       if (data.error) return setMessage(`${data.error}`);
-
       if (data.intent === "book") {
         const eventObj = events.find((e) => e.name.toLowerCase() === data.event.toLowerCase());
         if (!eventObj) return setMessage(`Event "${data.event}" not found`);
-
         setPendingBooking({ event: eventObj.name, tickets: data.tickets });
         setConfirmId(eventObj.id);
         setConfirm(true);
@@ -419,212 +234,101 @@ export default function Events() {
         setMessage(reply);
         setChatHistory(prev => [...prev, { from: "bot", text: reply }]);
       }
-    } catch (err) {
-      console.error("Error with chatbot:", err);
-      setMessage("Error with chatbot");
-    }
+    } catch (err) { console.error("Error with chatbot:", err); setMessage("Error with chatbot"); }
     setUsingChatbot(false);
   };
 
-  /*
-  * Checks the user's email and password combination when logging in, then enables the main display if it is determined it is a valid login.
-  * INPUTS:
-  *  e - The form submission event (used to prevent default form behavior).
-  * RETURNS: None directly; updates component state by setting login and logged in account states.
-  */
   const attemptLogin = async (e) => {
     e.preventDefault();
-
-    const username = loginUsername; 
+    const username = loginUsername;
     const password = loginPassword;
-
-    if (!username || !password) {
-        setMessage("Please enter a username and password");
-        return;
-    }
-
+    if (!username || !password) { setMessage("Please enter a username and password"); return; }
     try {
-        const res = await fetch("https://tigertix-0qva.onrender.com/api/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ username, password })
-        });
+      const res = await fetch("https://tigertix-0qva.onrender.com/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) { setMessage(data.error || "Login failed"); return; }
+      setLoggedIn(true);
+      setLoginUsername(username);
+      setMessage("Login successful!");
+    } catch (err) { console.error(err); setMessage("Error logging in"); }
+  };
 
-        const data = await res.json();
-
-        if (!res.ok) {
-            setMessage(data.error || "Login failed");
-            return;
-        }
-
-        setLoggedIn(true);
-        setLoginUsername(username);
-        setMessage("Login successful!");
-    } catch (err) {
-        console.error(err);
-        setMessage("Error logging in");
-    }
-};
-
-
-
-  /*
-  * Logs out the user from the website, returning them to the login screen.
-  * INPUTS: None directly; triggered by a button click.
-  * RETURNS: None directly; updates component state by setting login and logged in account states, and resetting the generic message.
-  */
   const logout = async (e) => {
     e.preventDefault();
-
     try {
-      await fetch("https://tigertix-0qva.onrender.com/api/logout", {
-        method: "POST",
-        credentials: "include"
-      });
-
+      await fetch("https://tigertix-0qva.onrender.com/api/logout", { method: "POST", credentials: "include" });
       setLoggedIn(false);
       setLoginUsername("");
       setMessage("Logged out");
-    } catch (err) {
-      console.error("Logout failed:", err);
-      setMessage("Logout failed");
-    }
+    } catch (err) { console.error("Logout failed:", err); setMessage("Logout failed"); }
   };
 
-  if (!loggedIn)
-  {
-      return (
-          <div>
-            <h2>{showRegister ? "Register" : "TigerTix Login"}</h2>
-            {message && <p role="status">{message}</p>}
-
-            {showRegister ? (
-              <form onSubmit={attemptRegister}>
-                <label for="email">Email</label>
-                <input
-                  type="text"
-                  id="email"
-                  value={regUsername}
-                  onChange={(e) => setRegUsername(e.target.value)}
-                />
-                <label for="pass">Password</label>
-                <input
-                  id="pass"
-                  type="password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                />
-                <button type="submit">Register</button>
-                <p>
-                  Already have an account?{" "}
-                  <button type="button" onClick={() => setShowRegister(false)}>Login</button>
-                </p>
-              </form>
-            ) : (
-              <form onSubmit={attemptLogin}>
-                <label for="email">Email</label>
-                <input
-                  id="email"
-                  type="text"
-                  value={loginUsername}  
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                />
-                <label for="pass">Password</label>
-                <input
-                  id="pass"
-                  type="password"
-                  value={loginPassword}   
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
-                <label for="submission">Login Button</label>
-                <button id="submission" type="submit">Login</button>
-                <p>
-                  Don't have an account?{" "}
-                  <button type="button" onClick={() => setShowRegister(true)}>Register</button>
-                </p>
-              </form>
-            )}
-
-          </div>
-
-      );
+  if (!loggedIn) {
+    return (
+      <div>
+        <h2>{showRegister ? "Register" : "TigerTix Login"}</h2>
+        {message && <p role="status">{message}</p>}
+        {showRegister ? (
+          <form onSubmit={attemptRegister}>
+            <label htmlFor="email">Email</label>
+            <input type="text" id="email" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
+            <label htmlFor="pass">Password</label>
+            <input id="pass" type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
+            <button type="submit">Register</button>
+            <p>Already have an account? <button type="button" onClick={() => setShowRegister(false)}>Login</button></p>
+          </form>
+        ) : (
+          <form onSubmit={attemptLogin}>
+            <label htmlFor="email">Email</label>
+            <input id="email" type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} />
+            <label htmlFor="pass">Password</label>
+            <input id="pass" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+            <label htmlFor="submission">Login Button</label>
+            <button id="submission" type="submit">Login</button>
+            <p>Don't have an account? <button type="button" onClick={() => setShowRegister(true)}>Register</button></p>
+          </form>
+        )}
+      </div>
+    );
   }
 
   return (
     <div>
       <h2>Campus Events</h2>
       {loginUsername && (
-        <>
-          <form name="loggedin" onSubmit={logout}>
-            <p role="status">{`Logged in as ${loginUsername}`}</p>
-            <input type="submit" name="submission" value="Log Out" />
-          </form>
-        </>
+        <form name="loggedin" onSubmit={logout}>
+          <p role="status">{`Logged in as ${loginUsername}`}</p>
+          <input type="submit" name="submission" value="Log Out" />
+        </form>
       )}
-
       {!usingChatbot ? (
         <>
-          <button
-            onClick={() => {
-              setChatHistory([]);
-              setUsingChatbot(true);
-            }}
-          >
-            Try our chatbot!
-          </button>
-          <button onClick={startVoiceCapture} aria-label="Use voice input" style={{ marginLeft: "10px" }}>
-            🎤 Speak
-          </button>
+          <button onClick={() => { setChatHistory([]); setUsingChatbot(true); }}>Try our chatbot!</button>
+          <button onClick={startVoiceCapture} aria-label="Use voice input" style={{ marginLeft: "10px" }}>🎤 Speak</button>
         </>
       ) : (
-        <button onClick={startVoiceCapture} aria-label="Use voice input" style={{ marginLeft: "10px" }}>
-          🎤 Speak
-        </button>
+        <button onClick={startVoiceCapture} aria-label="Use voice input" style={{ marginLeft: "10px" }}>🎤 Speak</button>
       )}
-
-
       {usingChatbot && (
         <form name="chatbotBox" onSubmit={triggerChatbot}>
-          <label for="message">Enter input:</label>
-          <input
-            type="text"
-            id="message"
-            name="message"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-          />
-          <label for="submission">Submit</label>
+          <label htmlFor="message">Enter input:</label>
+          <input type="text" id="message" name="message" value={chatInput} onChange={(e) => setChatInput(e.target.value)} />
+          <label htmlFor="submission">Submit</label>
           <input id="submission" name="submission" type="submit" value="Submit" />
         </form>
       )}
-
       {message && <p role="status">{message}</p>}
-
       {pendingBooking && (
         <div>
-          <button
-            onClick={() => {
-              confirmLLMBooking();
-              setAwaitingVoiceConfirm(false); // stop waiting for voice
-            }}
-            aria-label="Confirm LLM booking"
-          >
-            ✅ Confirm Booking
-          </button>
-          <button
-            onClick={() => {
-              confirmToggle(confirmId, false);
-              setPendingBooking(null);
-              setAwaitingVoiceConfirm(false); // stop waiting for voice
-            }}
-            aria-label="Cancel LLM booking"
-          >
-            ❌ Cancel
-          </button>
+          <button onClick={() => { confirmLLMBooking(); setAwaitingVoiceConfirm(false); }} aria-label="Confirm LLM booking">✅ Confirm Booking</button>
+          <button onClick={() => { confirmToggle(confirmId, false); setPendingBooking(null); setAwaitingVoiceConfirm(false); }} aria-label="Cancel LLM booking">❌ Cancel</button>
         </div>
       )}
-
       <div style={{ marginTop: "15px" }}>
         {chatHistory.map((m, i) => (
           <p key={i} style={{ fontWeight: m.from === "user" ? "bold" : "normal" }}>
@@ -633,23 +337,15 @@ export default function Events() {
           </p>
         ))}
       </div>
-      
       <ul>
         {events.map((event) => (
           <li key={event.id} style={{ marginBottom: "10px" }}>
             <h3>{event.name}</h3>
             <p>Date: {event.date}</p>
             <p>Tickets Available: {event.num_tickets}</p>
-
             {!(confirm && confirmId === event.id) && (
-              <button
-                onClick={() => confirmToggle(event.id, true)}
-                disabled={event.num_tickets <= 0}
-              >
-                Buy Ticket
-              </button>
+              <button onClick={() => confirmToggle(event.id, true)} disabled={event.num_tickets <= 0}>Buy Ticket</button>
             )}
-
             {confirm && confirmId === event.id && !pendingBooking && (
               <>
                 <button onClick={() => buyTicket(event.id)}>Yes</button>

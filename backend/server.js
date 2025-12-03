@@ -8,7 +8,7 @@ import llmApp from "./llm-driven-booking/server.js";
 const app = express();
 
 app.use(cors({
-  origin: "*",
+  origin: ["https://tiger-tix-lovat.vercel.app/"],
   credentials: true
 }));
 

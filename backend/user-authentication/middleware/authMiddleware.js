@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const SECRET_KEY = "my_evil_super_secret_key";
+const SECRET_KEY = process.env.JWT_SECRET;
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies?.token;

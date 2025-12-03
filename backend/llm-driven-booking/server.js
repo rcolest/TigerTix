@@ -8,5 +8,4 @@ app.use(express.json());
 
 app.use("/api/llm", llmRoutes);
 
-const PORT = 7001;
-app.listen(PORT, () => console.log(`✅ LLM service running on port ${PORT}`));
+export default app;

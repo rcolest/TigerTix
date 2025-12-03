@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { verifyToken } from './middleware/authMiddleware.js';
+import userAuthRoutes from './routes/userAuthRoutes.js';
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use("/api/auth", userAuthRoutes);
 
 app.get('/api/protected', verifyToken, (req, res) => {
   res.json({ message: `Hello ${req.user.username}, this is protected!` });
@@ -47,50 +49,7 @@ const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
 const db = new sqlite3.Database(dbPath);
 
-app.post("/api/register", async (req, res) => {
-  console.log("🔥 Incoming /api/register body:", req.body);
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ message: "Username and password required" });
-
-  db.get("SELECT * FROM savedaccounts WHERE username = ?", [username], async (err, row) => {
-    if (err) return res.status(500).json({ message: err.message });
-    if (row) return res.status(400).json({ message: "User already exists" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    db.run(
-      "INSERT INTO savedaccounts (username, password) VALUES (?, ?)",
-      [username, hashedPassword],
-      function (err2) {
-        if (err2) return res.status(500).json({ message: err2.message });
-        res.status(201).json({ message: "Registration successful" });
-      }
-    );
-  });
-});
-
-const SECRET_KEY = 'my_evil_super_secret_key';
-
-app.post("/api/login", (req, res) => {
-  const { username, password } = req.body;
-
-  db.get("SELECT * FROM savedaccounts WHERE username = ?", [username], async (err, user) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!user) return res.status(400).json({ error: "Invalid username or password" });
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ error: "Invalid username or password" });
-
-    const token = jwt.sign({ username: user.username}, SECRET_KEY, { expiresIn: '30m' });
-    res.cookie("token", token, { httpOnly: true });
-    res.json({ message: "Login successful" });
-  });
-});
-
-
-app.post("/api/logout", (req, res) => {
-  res.json({ message: "Logged out" });
-});
+const SECRET_KEY = process.env.JWT_SECRET;
 
 app.post("/api/events/:id/purchase", async (req, res) => {
   try {
@@ -108,7 +67,4 @@ app.post("/api/events/:id/purchase", async (req, res) => {
   }
 });
 
-const PORT = 8001;
-app.listen(PORT, () => {
-  console.log(`Auth service running on http://localhost:${PORT}`);
-});
+export default app;

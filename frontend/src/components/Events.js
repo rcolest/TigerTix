@@ -23,9 +23,9 @@ export default function Events() {
 
   const llmControllerRef = useRef(null);
 
-  const llmUrl = "http://localhost:7001/api/llm";
+  const llmUrl = "https://tigertix-0qva.onrender.com/api/llm";
 
-  const clientUrl = "http://localhost:6001/api";
+  const clientUrl = "https://tigertix-0qva.onrender.com/api";
 
 
   /*
@@ -35,7 +35,7 @@ export default function Events() {
   */
   const fetchEvents = async () => {
     try {
-      const res = await fetch("http://localhost:8001/api/events", {
+      const res = await fetch("https://tigertix-0qva.onrender.com/api/events", {
         credentials: "include"
       });
 
@@ -89,7 +89,7 @@ export default function Events() {
     }
 
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch("https://tigertix-0qva.onrender.com/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -442,7 +442,7 @@ export default function Events() {
     }
 
     try {
-        const res = await fetch("/api/login", {
+        const res = await fetch("https://tigertix-0qva.onrender.com/api/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -476,7 +476,7 @@ export default function Events() {
     e.preventDefault();
 
     try {
-      await fetch("http://localhost:8001/api/logout", {
+      await fetch("https://tigertix-0qva.onrender.com/api/logout", {
         method: "POST",
         credentials: "include"
       });

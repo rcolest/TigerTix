@@ -15,7 +15,9 @@ How To Run/Test App:
 3. Open a terminal in backend/user-authentication and enter: node server.js
 4. Open a new terminal in the frontend folder and enter:
 >Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
 >npm start
+
 This command will have a delay before it completes.
 
 If you want to run regression tests instead of starting the program, use "npm test" instead of "npm start" in Step 4.

@@ -1,5 +1,5 @@
 import path from 'path';
-import sqlite3 from 'sqlite3';
+import sqlite3 from 'better-sqlite3';
 import { fileURLToPath } from 'url';
 
 // __dirname replacement for ES modules

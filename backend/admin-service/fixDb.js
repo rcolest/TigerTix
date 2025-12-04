@@ -1,4 +1,4 @@
-import sqlite3 from 'sqlite3';
+import sqlite3 from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 

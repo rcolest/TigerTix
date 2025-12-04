@@ -1,4 +1,4 @@
-import sqlite3 from 'sqlite3';
+import sqlite3 from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 

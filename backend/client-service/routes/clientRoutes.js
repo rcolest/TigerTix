@@ -50,10 +50,12 @@ router.post("/login", async (req, res) => {
 });
 
 router.get("/events", (req, res) => {
-    db.all("SELECT * FROM events", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+  try {
+    const events = db.prepare("SELECT * FROM events").all();
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.post("/:id/purchase", (req, res) => {

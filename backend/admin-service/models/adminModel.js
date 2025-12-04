@@ -36,9 +36,8 @@ export const createEvent = ({ name, date, num_tickets }, callback) => {
  * RETURNS:
  * A list of all events in the database.
 */
-export const getAllEvents = (callback) => {
-  db.all('SELECT * FROM events', [], (err, rows) => {
-    if (err) callback(err);
-    else callback(null, rows);
-  });
+export const getAllEvents = () => {
+  const stmt = db.prepare('SELECT * FROM events');
+  return stmt.all();
 };
+

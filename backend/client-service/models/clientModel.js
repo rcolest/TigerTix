@@ -20,11 +20,10 @@ const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
  * A list of all events in the database.
  * Will result in a 500 server error if the database is unable to list its events.
 */
-export const getAllEvents = (callback) => {
-  db.all('SELECT * FROM events', [], (err, rows) => {
-    callback(err, rows);
-  });
+export const getAllEvents = () => {
+  return db.prepare('SELECT * FROM events').all();
 };
+
 
 /* Attempts to "purchase" a ticket for a selected event from the database; this deducts one ticket from its data.
  * INPUTS:

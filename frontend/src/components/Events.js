@@ -14,7 +14,7 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API}/api/events`, { credentials: "include" });
+      const res = await fetch(`${API}/auth/api/auth/events`, { credentials: "include" });
       const data = await res.json();
       if (!res.ok) {
         setEvents([]);
@@ -35,7 +35,7 @@ export default function Events() {
   const attemptLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/auth/api/login`, {
+      const res = await fetch(`${API}/auth/api/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

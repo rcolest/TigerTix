@@ -1,35 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
 
 export default function Events() {
+  const API = process.env.REACT_APP_API_URL;  
   const [events, setEvents] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
 
-  const [confirm, setConfirm] = useState(false);
-  const [confirmId, setConfirmId] = useState(null);
-
+  const [showRegister, setShowRegister] = useState(false);
+  const [regUsername, setRegUsername] = useState("");
+  const [regPassword, setRegPassword] = useState("");
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  const [regUsername, setRegUsername] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [showRegister, setShowRegister] = useState(false);
-
-  const llmControllerRef = useRef(null);
-
-  const BASE = process.env.REACT_APP_API_URL;      
-  const EVENTS = `${BASE}/api/events`;            
-  const AUTH = `${BASE}/api`;                
-  const LLM = `${BASE}/api/llm`;       
-
+  // --------------------------
+  // Load events
+  // --------------------------
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${EVENTS}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed");
-      setEvents(await res.json());
+      const res = await fetch(`${API}/api/events`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) {
+        setEvents([]);
+        setMessage(data.error || "Failed to load events");
+        return;
+      }
+      setEvents(data);
     } catch (err) {
-      console.error(err);
-      setMessage("Failed to load events");
+      console.error("fetchEvents error:", err);
+      setMessage("Error fetching events");
     }
   };
 
@@ -37,107 +35,118 @@ export default function Events() {
     fetchEvents();
   }, []);
 
+  // --------------------------
+  // Login
+  // --------------------------
+  const attemptLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API}/api/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.error || "Login failed");
+        return;
+      }
+
+      setLoggedIn(true);
+      setMessage("Login successful!");
+    } catch (err) {
+      console.error("Login error:", err);
+      setMessage("Error logging in");
+    }
+  };
+
+  // --------------------------
+  // Register
+  // --------------------------
   const attemptRegister = async (e) => {
     e.preventDefault();
-
-    if (!regUsername || !regPassword) {
-      setMessage("Please enter both an email and password.");
-      return;
-    }
-
     try {
-      const res = await fetch(`${AUTH}/register`, {
+      const res = await fetch(`${API}/api/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: regUsername, password: regPassword })
       });
-
       const data = await res.json();
-      if (!res.ok) return setMessage(data.error || "Registration failed");
+
+      if (!res.ok) {
+        setMessage(data.error || "Registration failed");
+        return;
+      }
 
       setMessage("Registration successful! Please log in.");
       setShowRegister(false);
       setRegUsername("");
       setRegPassword("");
-    } catch {
+    } catch (err) {
+      console.error("Register error:", err);
       setMessage("Error registering");
     }
   };
 
-  const attemptLogin = async (e) => {
-    e.preventDefault();
-
+  // --------------------------
+  // Logout
+  // --------------------------
+  const logout = async () => {
     try {
-      const res = await fetch(`${AUTH}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          username: loginUsername,
-          password: loginPassword
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) return setMessage(data.error || "Login failed");
-
-      setLoggedIn(true);
-      setMessage("Login successful!");
-    } catch {
-      setMessage("Login failed");
-    }
-  };
-
-  const logout = async (e) => {
-    e.preventDefault();
-    await fetch(`${AUTH}/logout`, {
-      method: "POST",
-      credentials: "include"
-    });
-    setLoggedIn(false);
-    setMessage("Logged out");
-  };
-
-  const confirmToggle = (id, state) => {
-    setConfirm(state);
-    setConfirmId(state ? id : null);
-    if (!state) setMessage("Ticket purchase cancelled");
-  };
-
-  const buyTicket = async (id) => {
-    try {
-      const res = await fetch(`${EVENTS}/${id}/purchase`, {
+      await fetch(`${API}/api/logout`, {
         method: "POST",
         credentials: "include"
       });
+      setLoggedIn(false);
+      setLoginUsername("");
+      setMessage("Logged out");
+    } catch (err) {
+      setMessage("Logout failed");
+    }
+  };
 
+  // --------------------------
+  // Buy Ticket
+  // --------------------------
+  const buyTicket = async (id) => {
+    try {
+      const res = await fetch(`${API}/api/events/${id}/purchase`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
       const data = await res.json();
-      if (!res.ok || data.error) {
+
+      if (!res.ok) {
         setMessage(data.error || "Purchase failed");
         return;
       }
 
-      setEvents((old) =>
-        old.map((e) =>
+      // Update event list
+      setEvents((prev) =>
+        prev.map((e) =>
           e.id === id ? { ...e, num_tickets: data.event.num_tickets } : e
         )
       );
 
-      const ev = events.find((e) => e.id === id);
-      setMessage(`Ticket purchased for ${ev.name}`);
-    } catch {
+      setMessage(`Ticket purchased for ${data.event.name}`);
+    } catch (err) {
+      console.error("buyTicket error:", err);
       setMessage("Error purchasing ticket");
     }
-
-    setConfirm(false);
-    setConfirmId(null);
   };
+
+  // --------------------------
+  // UI RENDERING
+  // --------------------------
 
   if (!loggedIn) {
     return (
       <div>
-        <h2>{showRegister ? "Register" : "TigerTix Login"}</h2>
+        <h2>{showRegister ? "Register" : "Login"}</h2>
         {message && <p role="status">{message}</p>}
 
         {showRegister ? (
@@ -150,10 +159,10 @@ export default function Events() {
 
             <button type="submit">Register</button>
 
-            <p>
-              Already have an account?{" "}
-              <button type="button" onClick={() => setShowRegister(false)}>Login</button>
-            </p>
+            <p>Already have an account?</p>
+            <button type="button" onClick={() => setShowRegister(false)}>
+              Go to Login
+            </button>
           </form>
         ) : (
           <form onSubmit={attemptLogin}>
@@ -165,10 +174,10 @@ export default function Events() {
 
             <button type="submit">Login</button>
 
-            <p>
-              Don't have an account?{" "}
-              <button type="button" onClick={() => setShowRegister(true)}>Register</button>
-            </p>
+            <p>Don't have an account?</p>
+            <button type="button" onClick={() => setShowRegister(true)}>
+              Register
+            </button>
           </form>
         )}
       </div>
@@ -179,33 +188,23 @@ export default function Events() {
     <div>
       <h2>Campus Events</h2>
 
-      <form onSubmit={logout}>
-        <p role="status">Logged in as {loginUsername}</p>
-        <input type="submit" value="Log Out" />
-      </form>
+      <p role="status">Logged in as {loginUsername}</p>
+      <button onClick={logout}>Log Out</button>
 
       {message && <p role="status">{message}</p>}
 
       <ul>
         {events.map((event) => (
-          <li key={event.id} style={{ marginBottom: "15px" }}>
+          <li key={event.id}>
             <h3>{event.name}</h3>
-            <p>Date: {event.date}</p>
+            <p>{event.date}</p>
             <p>Tickets Available: {event.num_tickets}</p>
-
-            {!confirm || confirmId !== event.id ? (
-              <button
-                onClick={() => confirmToggle(event.id, true)}
-                disabled={event.num_tickets <= 0}
-              >
-                Buy Ticket
-              </button>
-            ) : (
-              <>
-                <button onClick={() => buyTicket(event.id)}>Yes</button>
-                <button onClick={() => confirmToggle(event.id, false)}>No</button>
-              </>
-            )}
+            <button
+              onClick={() => buyTicket(event.id)}
+              disabled={event.num_tickets <= 0}
+            >
+              Buy Ticket
+            </button>
           </li>
         ))}
       </ul>

@@ -18,6 +18,10 @@ app.use("/auth", userAuthApp);
 app.use("/client", clientApp);
 app.use("/llm", llmApp);
 
+app.get("/", (req, res) => {
+  res.send("TigerTix backend is running");
+});
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Unified backend running on port ${PORT}`);

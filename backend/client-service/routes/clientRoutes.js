@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 
 const router = express.Router();
 
-const USER_AUTH_URL = process.env.USER_AUTH_URL || "http://localhost:8001";
+const USER_AUTH_URL = process.env.USER_AUTH_URL || "https://tigertix-0qva.onrender.com/auth";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

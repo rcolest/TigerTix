@@ -22,7 +22,8 @@ app.get('/api/protected', verifyToken, (req, res) => {
   res.json({ message: `Hello ${req.user.username}, this is protected!` });
 });
 
-const CLIENT_URL = process.env.BACKEND_URL || "https://tigertix-0qva.onrender.com/client";
+const CLIENT_URL = process.env.BACKEND_URL || "http://localhost:10000/client";
+
 
 app.get("/api/events", async (req, res) => {
   try {

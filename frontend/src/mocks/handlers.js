@@ -1,8 +1,9 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse } from "msw";
+
+const API = process.env.REACT_APP_API_URL;
 
 export const handlers = [
-  // GET events list
-  http.get('/api/events', () => {
+  http.get(`${API}/api/events`, () => {
     return HttpResponse.json([
       {
         id: 1,
@@ -13,23 +14,21 @@ export const handlers = [
     ]);
   }),
 
-  // POST login
-  http.post('/api/login', () => {
+  http.post(`${API}/api/login`, () => {
     return HttpResponse.json({
       token: "FAKE_JWT",
-      email: "test-email@example.com"
+      email: "test-email@example.com",
     });
   }),
 
-  // POST purchase
-  http.post('/api/events/:id/purchase', ({ params }) => {
+  http.post(`${API}/api/events/1/purchase`, () => {
     return HttpResponse.json({
       event: {
-        id: Number(params.id),
+        id: 1,
         name: "Basketball Game",
         date: "2025-02-10",
-        num_tickets: 49
-      }
+        num_tickets: 49,
+      },
     });
-  })
+  }),
 ];

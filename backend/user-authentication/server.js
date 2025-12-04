@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { verifyToken } from './middleware/authMiddleware.js';
 import userAuthRoutes from './routes/userAuthRoutes.js';
+import Database from "better-sqlite3";
 
 const app = express();
 
@@ -48,7 +49,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, "..", "shared-db", "database.sqlite");
-const db = new sqlite3.Database(dbPath);
+const db = new Database(dbPath, { verbose: console.log });
 
 const SECRET_KEY = process.env.JWT_SECRET;
 

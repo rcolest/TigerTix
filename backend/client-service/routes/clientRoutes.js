@@ -2,6 +2,7 @@ import express from "express";
 import sqlite3 from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
+import Database from "better-sqlite3";
 
 const router = express.Router();
 
@@ -11,13 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
 console.log("DB Path:", dbPath);
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-    console.error("Failed to open database:", err.message);
-  } else {
-    console.log("Database opened successfully");
-  }
-});
+const db = new Database(dbPath, { verbose: console.log });
 
 router.post("/register", async (req, res) => {
     try {

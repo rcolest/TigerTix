@@ -1,19 +1,14 @@
 import path from 'path';
 import sqlite3 from 'better-sqlite3';
 import { fileURLToPath } from 'url';
+import Database from "better-sqlite3";
 
 // __dirname replacement for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('❌ Error connecting to database:', err.message);
-  } else {
-    console.log('✅ Connected to SQLite database.');
-  }
-});
+const db = new Database(dbPath, { verbose: console.log });
 
 /* Creates a new event, and adds it to the database.
  * INPUTS:

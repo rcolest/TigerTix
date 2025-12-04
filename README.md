@@ -1,6 +1,6 @@
 TigerTix Clemson Campus Event Ticketing System - CPSC 3720 Section 3
-Created by: Jonah Colestock, Christopher Skelly
-Under Dr. Julian Brinkley, and TAs Colt Doster and Atik Enam
+
+Created by: Jonah Colestock, Christopher Skelly, under Dr. Julian Brinkley, and TAs Colt Doster and Atik Enam
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

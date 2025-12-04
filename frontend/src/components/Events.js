@@ -35,7 +35,7 @@ export default function Events() {
   const attemptLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/api/login`, {
+      const res = await fetch(`${API}/auth/api/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -60,7 +60,7 @@ export default function Events() {
   const attemptRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/api/register`, {
+      const res = await fetch(`${API}/auth/api/register`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -86,7 +86,7 @@ export default function Events() {
 
   const logout = async () => {
     try {
-      await fetch(`${API}/api/logout`, {
+      await fetch(`${API}/auth/api/logout`, {
         method: "POST",
         credentials: "include"
       });
@@ -100,7 +100,7 @@ export default function Events() {
 
   const buyTicket = async (id) => {
     try {
-      const res = await fetch(`${API}/api/events/${id}/purchase`, {
+      const res = await fetch(`${API}/auth/api/events/${id}/purchase`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" }

@@ -26,7 +26,7 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch("https://tigertix-0qva.onrender.com/api/events", { credentials: "include" });
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/events`, { credentials: "include" });
       if (!res.ok) {
         setMessage("Failed to load events");
         setEvents([]);
@@ -58,7 +58,7 @@ export default function Events() {
       return;
     }
     try {
-      const res = await fetch("https://tigertix-0qva.onrender.com/api/register", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -244,7 +244,7 @@ export default function Events() {
     const password = loginPassword;
     if (!username || !password) { setMessage("Please enter a username and password"); return; }
     try {
-      const res = await fetch("https://tigertix-0qva.onrender.com/api/login", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -261,7 +261,7 @@ export default function Events() {
   const logout = async (e) => {
     e.preventDefault();
     try {
-      await fetch("https://tigertix-0qva.onrender.com/api/logout", { method: "POST", credentials: "include" });
+      await fetch(`${process.env.REACT_APP_API_URL}/api/logout`, { method: "POST", credentials: "include" });
       setLoggedIn(false);
       setLoginUsername("");
       setMessage("Logged out");

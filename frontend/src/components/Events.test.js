@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Events from "./Events";
@@ -67,7 +68,6 @@ beforeEach(() => {
     });
 });
 
-
 test("Site loads", async () => {
     render(<Events />);
     await screen.findByText("Login");
@@ -114,9 +114,7 @@ test("Book ticket", async () => {
 
     await userEvent.click(screen.getAllByText("Yes")[0]);
 
-    expect(
-        screen.getByText("Tickets Available: 9")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Tickets Available: 9")).toBeInTheDocument();
 });
 
 test("Chatbot function", async () => {

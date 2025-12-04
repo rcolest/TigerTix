@@ -5,12 +5,13 @@ import clientRoutes from './routes/clientRoutes.js';
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:3000", 
-  credentials: true 
+  origin: ["https://tiger-tix-lovat.vercel.app"],
+  credentials: true
 }));
 
 app.use(express.json());
 app.use('/api', clientRoutes);
 
 export default app;
+
 

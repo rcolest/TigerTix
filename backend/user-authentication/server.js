@@ -11,7 +11,7 @@ import userAuthRoutes from './routes/userAuthRoutes.js';
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: ["https://tiger-tix-lovat.vercel.app"],
   credentials: true
 }));
 
@@ -22,7 +22,7 @@ app.get('/api/protected', verifyToken, (req, res) => {
   res.json({ message: `Hello ${req.user.username}, this is protected!` });
 });
 
-const CLIENT_URL = "http://localhost:6001"; 
+const CLIENT_URL = process.env.BACKEND_URL || "https://tigertix-0qva.onrender.com/client";
 
 app.get("/api/events", async (req, res) => {
   try {

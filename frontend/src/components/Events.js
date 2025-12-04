@@ -39,7 +39,8 @@ export default function Events() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+        credentials: "include"
       });
       const data = await res.json();
 
@@ -63,7 +64,8 @@ export default function Events() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: regUsername, password: regPassword })
+        body: JSON.stringify({ username: regUsername, password: regPassword }),
+        credentials: "include"
       });
       const data = await res.json();
 

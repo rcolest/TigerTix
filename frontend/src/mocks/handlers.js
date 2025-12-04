@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 export const handlers = [
   // GET events list
-  http.get('http://localhost:6001/api/events', () => {
+  http.get('/api/events', () => {
     return HttpResponse.json([
       {
         id: 1,
@@ -14,7 +14,7 @@ export const handlers = [
   }),
 
   // POST login
-  http.post('http://localhost:8001/api/login', async () => {
+  http.post('/api/login', () => {
     return HttpResponse.json({
       token: "FAKE_JWT",
       email: "test-email@example.com"
@@ -22,10 +22,10 @@ export const handlers = [
   }),
 
   // POST purchase
-  http.post('http://localhost:6001/api/events/1/purchase', () => {
+  http.post('/api/events/:id/purchase', ({ params }) => {
     return HttpResponse.json({
       event: {
-        id: 1,
+        id: Number(params.id),
         name: "Basketball Game",
         date: "2025-02-10",
         num_tickets: 49

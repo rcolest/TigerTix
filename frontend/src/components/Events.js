@@ -15,7 +15,7 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API}/api/client/api/events`, {
+      const res = await fetch(`${API}/client/api/events`, {
         credentials: "include"
       });
       const data = await res.json();

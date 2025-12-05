@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function Events() {
-  const API = process.env.REACT_APP_API_URL;  
+  const API = process.env.REACT_APP_API_URL;
+
   const [events, setEvents] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
@@ -14,13 +15,18 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API}/auth/api/auth/events`, { credentials: "include" });
+      const res = await fetch(`${API}/client/api/events`, {
+        credentials: "include"
+      });
+
       const data = await res.json();
+
       if (!res.ok) {
         setEvents([]);
         setMessage(data.error || "Failed to load events");
         return;
       }
+
       setEvents(data);
     } catch (err) {
       console.error("fetchEvents error:", err);
@@ -35,15 +41,17 @@ export default function Events() {
   const attemptLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/auth/api/auth/login`, {
+      const res = await fetch(`${API}/auth/api/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: loginUsername, password: loginPassword }),
-        credentials: "include"
+        body: JSON.stringify({
+          username: loginUsername,
+          password: loginPassword
+        })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!res.ok) {
         setMessage(data.error || "Login failed");
         return;
@@ -64,11 +72,13 @@ export default function Events() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: regUsername, password: regPassword }),
-        credentials: "include"
+        body: JSON.stringify({
+          username: regUsername,
+          password: regPassword
+        })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!res.ok) {
         setMessage(data.error || "Registration failed");
         return;
@@ -76,8 +86,6 @@ export default function Events() {
 
       setMessage("Registration successful! Please log in.");
       setShowRegister(false);
-      setRegUsername("");
-      setRegPassword("");
     } catch (err) {
       console.error("Register error:", err);
       setMessage("Error registering");
@@ -87,11 +95,11 @@ export default function Events() {
   const logout = async () => {
     try {
       await fetch(`${API}/auth/api/logout`, {
-        method: "POST",
-        credentials: "include"
-      });
+      method: "POST",
+      credentials: "include"
+    });
+
       setLoggedIn(false);
-      setLoginUsername("");
       setMessage("Logged out");
     } catch (err) {
       setMessage("Logout failed");
@@ -100,11 +108,12 @@ export default function Events() {
 
   const buyTicket = async (id) => {
     try {
-      const res = await fetch(`${API}/auth/api/events/${id}/purchase`, {
+      const res = await fetch(`${API}/client/api/${id}/purchase`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" }
       });
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -124,7 +133,6 @@ export default function Events() {
       setMessage("Error purchasing ticket");
     }
   };
-
 
   if (!loggedIn) {
   return (

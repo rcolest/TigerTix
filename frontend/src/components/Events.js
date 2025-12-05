@@ -122,37 +122,70 @@ export default function Events() {
     }
   };
 
-  // 🔥 CHATBOT: SEND MESSAGE
+  // CHATBOT: SEND MESSAGE
   const sendChatMessage = async () => {
-    if (!chatInput.trim()) return;
+  if (!chatInput.trim()) return;
 
-    // Add the user message
-    setChatMessages((prev) => [...prev, { from: "user", text: chatInput }]);
-
+  // Add user's message
+  setChatMessages(prev => [...prev, { from: "user", text: chatInput }]);
     const messageToSend = chatInput;
     setChatInput("");
-
     try {
-      const res = await fetch(`${API}/llm/parse`, {
+      // STEP 1: parse
+      const parseRes = await fetch(`${API}/llm/parse`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: messageToSend })
       });
 
-      const data = await res.json();
+      const parsed = await parseRes.json();
 
-      setChatMessages((prev) => [
+      if (!parseRes.ok || parsed.intent !== "book") {
+        setChatMessages(prev => [
+          ...prev,
+          { from: "bot", text: parsed.response || "Sorry, I didn’t understand." }
+        ]);
+        return;
+      }
+
+      // STEP 2: book immediately
+      const confirmRes = await fetch(`${API}/llm/confirm`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: parsed.event,
+          tickets: parsed.tickets
+        })
+      });
+
+      const booked = await confirmRes.json();
+
+      if (!confirmRes.ok) {
+        setChatMessages(prev => [
+          ...prev,
+          { from: "bot", text: booked.error || "Could not complete booking." }
+        ]);
+        return;
+      }
+
+      // Update UI after booking
+      fetchEvents();
+
+      setChatMessages(prev => [
         ...prev,
-        { from: "bot", text: data.reply || "No response" }
+        { from: "bot", text: booked.message }
       ]);
+
     } catch (err) {
-      setChatMessages((prev) => [
+      setChatMessages(prev => [
         ...prev,
         { from: "bot", text: "Error contacting assistant." }
       ]);
     }
   };
+
 
   // LOGIN PAGE
   if (!loggedIn) {

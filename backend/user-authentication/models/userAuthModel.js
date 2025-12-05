@@ -98,3 +98,4 @@ export const createUser = ({ username, hashedPassword }) => {
     throw error;
   }
 };
+

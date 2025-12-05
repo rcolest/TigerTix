@@ -15,21 +15,17 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API}/api/events`, {
+      const res = await fetch(`${API}/client/api/events`, {
         credentials: "include"
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setEvents([]);
         setMessage(data.error || "Failed to load events");
         return;
       }
-
       setEvents(data);
     } catch (err) {
-      console.error("fetchEvents error:", err);
       setMessage("Error fetching events");
     }
   };
@@ -41,7 +37,7 @@ export default function Events() {
   const attemptLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/api/login`, {
+      const res = await fetch(`${API}/auth/api/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -50,17 +46,14 @@ export default function Events() {
           password: loginPassword
         })
       });
-
       const data = await res.json();
       if (!res.ok) {
         setMessage(data.error || "Login failed");
         return;
       }
-
       setLoggedIn(true);
       setMessage("Login successful!");
     } catch (err) {
-      console.error("Login error:", err);
       setMessage("Error logging in");
     }
   };
@@ -68,7 +61,7 @@ export default function Events() {
   const attemptRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/api/register`, {
+      const res = await fetch(`${API}/auth/api/register`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -77,28 +70,24 @@ export default function Events() {
           password: regPassword
         })
       });
-
       const data = await res.json();
       if (!res.ok) {
         setMessage(data.error || "Registration failed");
         return;
       }
-
       setMessage("Registration successful! Please log in.");
       setShowRegister(false);
     } catch (err) {
-      console.error("Register error:", err);
       setMessage("Error registering");
     }
   };
 
   const logout = async () => {
     try {
-      await fetch(`${API}/api/logout`, {
-      method: "POST",
-      credentials: "include"
-    });
-
+      await fetch(`${API}/auth/api/logout`, {
+        method: "POST",
+        credentials: "include"
+      });
       setLoggedIn(false);
       setMessage("Logged out");
     } catch (err) {
@@ -108,93 +97,87 @@ export default function Events() {
 
   const buyTicket = async (id) => {
     try {
-      const res = await fetch(`${API}/api/${id}/purchase`, {
+      const res = await fetch(`${API}/client/api/${id}/purchase`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" }
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setMessage(data.error || "Purchase failed");
         return;
       }
-
       setEvents((prev) =>
         prev.map((e) =>
           e.id === id ? { ...e, num_tickets: data.event.num_tickets } : e
         )
       );
-
       setMessage(`Ticket purchased for ${data.event.name}`);
     } catch (err) {
-      console.error("buyTicket error:", err);
       setMessage("Error purchasing ticket");
     }
   };
 
   if (!loggedIn) {
-  return (
-    <div>
-      <h2>{showRegister ? "Register" : "TigerTix Login"}</h2>
-      {message && <p role="status">{message}</p>}
+    return (
+      <div>
+        <h2>{showRegister ? "Register" : "TigerTix Login"}</h2>
+        {message && <p role="status">{message}</p>}
 
-      {showRegister ? (
-        <form onSubmit={attemptRegister}>
-          <label>Email</label>
-          <input 
-            type="text" 
-            value={regUsername} 
-            onChange={(e) => setRegUsername(e.target.value)} 
-          />
+        {showRegister ? (
+          <form onSubmit={attemptRegister}>
+            <label>Email</label>
+            <input
+              type="text"
+              value={regUsername}
+              onChange={(e) => setRegUsername(e.target.value)}
+            />
 
-          <label>Password</label>
-          <input 
-            type="password" 
-            value={regPassword} 
-            onChange={(e) => setRegPassword(e.target.value)} 
-          />
+            <label>Password</label>
+            <input
+              type="password"
+              value={regPassword}
+              onChange={(e) => setRegPassword(e.target.value)}
+            />
 
-          <button type="submit">Register</button>
+            <button type="submit">Register</button>
 
-          <p>
-            Already have an account?{" "}
-            <button type="button" onClick={() => setShowRegister(false)}>
-              Login
-            </button>
-          </p>
-        </form>
-      ) : (
-        <form onSubmit={attemptLogin}>
-          <label>Email</label>
-          <input 
-            type="text" 
-            value={loginUsername} 
-            onChange={(e) => setLoginUsername(e.target.value)} 
-          />
+            <p>
+              Already have an account?{" "}
+              <button type="button" onClick={() => setShowRegister(false)}>
+                Login
+              </button>
+            </p>
+          </form>
+        ) : (
+          <form onSubmit={attemptLogin}>
+            <label>Email</label>
+            <input
+              type="text"
+              value={loginUsername}
+              onChange={(e) => setLoginUsername(e.target.value)}
+            />
 
-          <label>Password</label>
-          <input 
-            type="password" 
-            value={loginPassword} 
-            onChange={(e) => setLoginPassword(e.target.value)} 
-          />
+            <label>Password</label>
+            <input
+              type="password"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+            />
 
-          <button type="submit">Login</button>
+            <button type="submit">Login</button>
 
-          <p>
-            Don't have an account?{" "}
-            <button type="button" onClick={() => setShowRegister(true)}>
-              Register
-            </button>
-          </p>
-        </form>
-      )}
-    </div>
-  );
-}
-
+            <p>
+              Don't have an account?{" "}
+              <button type="button" onClick={() => setShowRegister(true)}>
+                Register
+              </button>
+            </p>
+          </form>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

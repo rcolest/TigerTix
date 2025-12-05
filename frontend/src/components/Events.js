@@ -61,7 +61,7 @@ export default function Events() {
   const attemptRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/auth/register`, {
+      const res = await fetch(`${API}/authregister`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -84,7 +84,7 @@ export default function Events() {
 
   const logout = async () => {
     try {
-      await fetch(`${API}/auth/logout`, {
+      await fetch(`${API}/logout`, {
         method: "POST",
         credentials: "include"
       });

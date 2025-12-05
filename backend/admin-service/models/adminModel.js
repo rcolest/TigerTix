@@ -1,5 +1,4 @@
 import path from 'path';
-import sqlite3 from 'better-sqlite3';
 import { fileURLToPath } from 'url';
 import Database from "better-sqlite3";
 

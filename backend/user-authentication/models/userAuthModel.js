@@ -11,15 +11,22 @@ let db = null;
 const initializeDb = () => {
   try {
     if (!db) {
-      db = new Database(dbPath, { verbose: console.log });
-      console.log(`Database initialized at ${dbPath}`);
+      console.log("DB Path:", dbPath);
+
+      if (!fs.existsSync(dbPath)) {
+        console.error("DATABASE FILE DOES NOT EXIST:", dbPath);
+      }
+
+      db = new Database(dbPath);
+      console.log("SQLite opened successfully.");
     }
     return db;
   } catch (error) {
-    console.error(`Failed to initialize database at ${dbPath}:`, error);
+    console.error("DB init error:", error);
     throw error;
   }
 };
+
 
 export const findUserByUsername = (username) => {
   const database = initializeDb();

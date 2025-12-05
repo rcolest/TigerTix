@@ -8,19 +8,18 @@ const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
 const db = new Database(dbPath, { verbose: console.log });
 
-export const findUserByUsername = (username, callback) => {
+export const findUserByUsername = (username) => {
   const sql = `SELECT * FROM savedaccounts WHERE username = ?`;
-  db.get(sql, [username], (err, row) => {
-    if (err) return callback(err);
-    callback(null, row);
-  });
+  const row = db.prepare(sql).get(username);
+  return row || null;
 };
 
-export const createUser = ({ username, hashedPassword }, callback) => {
+export const createUser = ({ username, hashedPassword }) => {
   console.log("MODEL RECEIVED:", { username, hashedPassword });
+
   const sql = `INSERT INTO savedaccounts (username, password) VALUES (?, ?)`;
-  db.run(sql, [username, hashedPassword], function (err) {
-    if (err) return callback(err);
-    callback(null, { id: this.lastID });
-  });
+  const stmt = db.prepare(sql);
+  const info = stmt.run(username, hashedPassword);
+
+  return { id: info.lastInsertRowid };
 };

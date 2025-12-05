@@ -12,8 +12,10 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (!allowedOrigins.includes(origin)) return callback(new Error("Not allowed by CORS"), false);
-    return callback(null, true);
+    if (origin.endsWith(".vercel.app") || origin === "https://tiger-tix-lovat.vercel.app") {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"), false);
   },
   credentials: true
 }));

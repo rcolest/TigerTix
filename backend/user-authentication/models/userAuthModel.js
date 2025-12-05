@@ -8,79 +8,61 @@ const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
 const dbDir = path.dirname(dbPath);
-let db = null;
 
-const initializeDb = () => {
-  try {
-    if (db && typeof db.prepare === 'function') {
-      return db;
-    }
+// Initialize database immediately
+let db;
+try {
+  console.log("[DB] Initializing database at:", dbPath);
+  
+  // Ensure directory exists
+  if (!fs.existsSync(dbDir)) {
+    console.log("[DB] Creating directory:", dbDir);
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
 
-    console.log("DB Path:", dbPath);
+  // Create database connection
+  db = new Database(dbPath);
+  console.log("[DB] Database connection opened");
 
-    // Ensure directory exists
-    if (!fs.existsSync(dbDir)) {
-      console.log("Creating database directory:", dbDir);
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
-
-    // Open database
-    db = new Database(dbPath);
-    console.log("SQLite opened successfully.");
-
-    // Verify database is valid
-    if (!db || typeof db.prepare !== 'function') {
-      throw new Error("Database object is invalid");
-    }
-
-    // Initialize schema if tables don't exist
-    const checkTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='savedaccounts'");
-    const tableExists = checkTable.get();
+  // Create tables if they don't exist
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      date TEXT NOT NULL,
+      num_tickets INTEGER NOT NULL
+    );
     
-    if (!tableExists) {
-      console.log("Creating tables...");
-      const initSql = `
-        CREATE TABLE IF NOT EXISTS events (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          date TEXT NOT NULL,
-          num_tickets INTEGER NOT NULL
-        );
-        
-        CREATE TABLE IF NOT EXISTS savedaccounts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT NOT NULL,
-          password TEXT NOT NULL
-        );
-      `;
-      db.exec(initSql);
-      console.log("Tables created successfully.");
-    }
+    CREATE TABLE IF NOT EXISTS savedaccounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL
+    );
+  `);
+  console.log("[DB] Schema initialized");
+} catch (error) {
+  console.error("[DB] FATAL ERROR during initialization:", error);
+  process.exit(1);
+}
 
-    return db;
+export const findUserByUsername = (username) => {
+  try {
+    const sql = `SELECT * FROM savedaccounts WHERE username = ?`;
+    return db.prepare(sql).get(username) || null;
   } catch (error) {
-    console.error("DB init error:", error);
-    db = null;
+    console.error("[DB] Error in findUserByUsername:", error);
     throw error;
   }
 };
 
-export const findUserByUsername = (username) => {
-  const database = initializeDb();
-  if (!database || typeof database.prepare !== 'function') {
-    throw new Error("Database not initialized or invalid");
-  }
-  const sql = `SELECT * FROM savedaccounts WHERE username = ?`;
-  return database.prepare(sql).get(username) || null;
-};
-
 export const createUser = ({ username, hashedPassword }) => {
-  const database = initializeDb();
-  if (!database || typeof database.prepare !== 'function') {
-    throw new Error("Database not initialized or invalid");
+  try {
+    const sql = `INSERT INTO savedaccounts (username, password) VALUES (?, ?)`;
+    const stmt = db.prepare(sql);
+    const info = stmt.run(username, hashedPassword);
+    return { id: info.lastInsertRowid };
+  } catch (error) {
+    console.error("[DB] Error in createUser:", error);
+    throw error;
   }
-  const sql = `INSERT INTO savedaccounts (username, password) VALUES (?, ?)`;
-  const stmt = database.prepare(sql);
-  const info = stmt.run(username, hashedPassword);
-  return { id: info.lastInsertRowid };
 };

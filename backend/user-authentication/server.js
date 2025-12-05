@@ -30,7 +30,7 @@ app.use(cors({
 app.options(/.*/, cors());
 
 app.use(express.json());
-app.use("/api/auth", userAuthRoutes);
+app.use("/auth", userAuthRoutes);
 
 app.get('/api/protected', verifyToken, (req, res) => {
   res.json({ message: `Hello ${req.user.username}, this is protected!` });

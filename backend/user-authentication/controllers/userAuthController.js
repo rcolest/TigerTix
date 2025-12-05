@@ -1,31 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
-// Lazy load model functions to prevent circular dependency and import errors
-let modelFunctions = null;
-
-const getModelFunctions = () => {
-  if (modelFunctions) return modelFunctions;
-  try {
-    return import("../models/userAuthModel.js").then(mod => {
-      modelFunctions = {
-        findUserByUsername: mod.findUserByUsername,
-        createUser: mod.createUser
-      };
-      return modelFunctions;
-    });
-  } catch (error) {
-    console.error("Failed to load model functions:", error);
-    throw error;
-  }
-};
+import { findUserByUsername, createUser } from "../models/userAuthModel.js";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 
 // REGISTER
-export const registerUser = async (req, res) => {
+export const registerUser = (req, res) => {
   try {
-    const { findUserByUsername, createUser } = await getModelFunctions();
     const { username, password } = req.body;
 
     const existing = findUserByUsername(username);
@@ -44,9 +25,8 @@ export const registerUser = async (req, res) => {
 };
 
 // LOGIN
-export const loginUser = async (req, res) => {
+export const loginUser = (req, res) => {
   try {
-    const { findUserByUsername } = await getModelFunctions();
     const { username, password } = req.body;
 
     const user = findUserByUsername(username);
@@ -65,5 +45,5 @@ export const loginUser = async (req, res) => {
 
 // LOGOUT
 export const logoutAccount = (req, res) => {
-  res.json({ message: "Logged out" });
+  return res.json({ message: "Logged out" });
 };

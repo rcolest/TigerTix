@@ -6,30 +6,40 @@ const SECRET_KEY = process.env.JWT_SECRET;
 
 // REGISTER
 export const registerUser = (req, res) => {
-  const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-  const existing = findUserByUsername(username);
-  if (existing) {
-    return res.status(400).json({ error: "Username already exists" });
+    const existing = findUserByUsername(username);
+    if (existing) {
+      return res.status(400).json({ error: "Username already exists" });
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const newUser = createUser({ username, hashedPassword });
+
+    res.json({ id: newUser.id, username });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ error: "Registration failed", details: error.message });
   }
-
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  const newUser = createUser({ username, hashedPassword });
-
-  res.json({ id: newUser.id, username });
 };
 
 // LOGIN
 export const loginUser = (req, res) => {
-  const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-  const user = findUserByUsername(username);
-  if (!user) return res.status(400).json({ error: "User not found" });
+    const user = findUserByUsername(username);
+    if (!user) return res.status(400).json({ error: "User not found" });
 
-  const valid = bcrypt.compareSync(password, user.password);
-  if (!valid) return res.status(400).json({ error: "Invalid password" });
+    const valid = bcrypt.compareSync(password, user.password);
+    if (!valid) return res.status(400).json({ error: "Invalid password" });
 
-  res.json({ message: "Login successful" });
+    res.json({ message: "Login successful" });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed", details: error.message });
+  }
 };
 
 

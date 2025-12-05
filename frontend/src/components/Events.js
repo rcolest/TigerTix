@@ -13,7 +13,6 @@ export default function Events() {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // 🔥 CHATBOT ADDED
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
@@ -134,7 +133,7 @@ export default function Events() {
     setChatInput("");
 
     try {
-      const res = await fetch(`${API}/llm/ask`, {
+      const res = await fetch(`${API}/llm/parse`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

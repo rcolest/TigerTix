@@ -24,19 +24,14 @@ export const loginUser = (req, res) => {
   const { username, password } = req.body;
 
   const user = findUserByUsername(username);
-  if (!user) {
-    return res.status(400).json({ error: "Invalid username or password" });
-  }
+  if (!user) return res.status(400).json({ error: "User not found" });
 
   const valid = bcrypt.compareSync(password, user.password);
-  if (!valid) {
-    return res.status(400).json({ error: "Invalid username or password" });
-  }
+  if (!valid) return res.status(400).json({ error: "Invalid password" });
 
-  const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: "1h" });
-
-  res.json({ message: "Login successful", token });
+  res.json({ message: "Login successful" });
 };
+
 
 // LOGOUT
 export const logoutAccount = (req, res) => {

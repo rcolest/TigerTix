@@ -10,16 +10,12 @@ const db = new Database(dbPath, { verbose: console.log });
 
 export const findUserByUsername = (username) => {
   const sql = `SELECT * FROM savedaccounts WHERE username = ?`;
-  const row = db.prepare(sql).get(username);
-  return row || null;
+  return db.prepare(sql).get(username) || null;
 };
 
 export const createUser = ({ username, hashedPassword }) => {
-  console.log("MODEL RECEIVED:", { username, hashedPassword });
-
   const sql = `INSERT INTO savedaccounts (username, password) VALUES (?, ?)`;
   const stmt = db.prepare(sql);
   const info = stmt.run(username, hashedPassword);
-
   return { id: info.lastInsertRowid };
 };

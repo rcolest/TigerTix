@@ -1,6 +1,8 @@
 import express from 'express';
 import * as authController from '../controllers/userAuthController.js';
 
+console.log("Loaded controllers:", authController);
+
 const router = express.Router();
 
 router.post('/register', authController.registerUser);

@@ -1,12 +1,24 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { findUserByUsername, createUser } from "../models/userAuthModel.js";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 
+let modelFunctions = null;
+
+const loadModel = async () => {
+  if (modelFunctions) return modelFunctions;
+  const mod = await import("../models/userAuthModel.js");
+  modelFunctions = {
+    findUserByUsername: mod.findUserByUsername,
+    createUser: mod.createUser
+  };
+  return modelFunctions;
+};
+
 // REGISTER
-export const registerUser = (req, res) => {
+export const registerUser = async (req, res) => {
   try {
+    const { findUserByUsername, createUser } = await loadModel();
     const { username, password } = req.body;
 
     const existing = findUserByUsername(username);
@@ -25,8 +37,9 @@ export const registerUser = (req, res) => {
 };
 
 // LOGIN
-export const loginUser = (req, res) => {
+export const loginUser = async (req, res) => {
   try {
+    const { findUserByUsername } = await loadModel();
     const { username, password } = req.body;
 
     const user = findUserByUsername(username);

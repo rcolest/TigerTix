@@ -6,7 +6,31 @@ import Database from "better-sqlite3";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
+// Find the shared-db directory by walking up from current location
+function findSharedDbPath() {
+  let currentDir = __dirname;
+  while (currentDir !== path.dirname(currentDir)) {
+    const candidatePath = path.join(currentDir, "shared-db", "database.sqlite");
+    const candidateDir = path.join(currentDir, "shared-db");
+    
+    console.log("[DB] Looking for database at:", candidatePath);
+    
+    // Check if we found the backend folder structure
+    if (fs.existsSync(candidateDir)) {
+      console.log("[DB] Found shared-db directory at:", candidateDir);
+      return candidatePath;
+    }
+    
+    currentDir = path.dirname(currentDir);
+  }
+  
+  // Fallback: assume standard structure
+  const fallbackPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
+  console.log("[DB] Using fallback database path:", fallbackPath);
+  return fallbackPath;
+}
+
+const dbPath = findSharedDbPath();
 const dbDir = path.dirname(dbPath);
 
 // Initialize database immediately
@@ -42,6 +66,8 @@ try {
   console.log("[DB] Schema initialized");
 } catch (error) {
   console.error("[DB] FATAL ERROR during initialization:", error);
+  console.error("[DB] Attempted path:", dbPath);
+  console.error("[DB] Directory exists:", fs.existsSync(dbDir));
   process.exit(1);
 }
 

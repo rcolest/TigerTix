@@ -15,7 +15,7 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API}/client/api/events`, {
+      const res = await fetch(`${API}/client/events`, {
         credentials: "include"
       });
       const data = await res.json();
@@ -97,7 +97,7 @@ export default function Events() {
 
   const buyTicket = async (id) => {
     try {
-      const res = await fetch(`${API}/client/api/${id}/purchase`, {
+      const res = await fetch(`${API}/client/${id}/purchase`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" }

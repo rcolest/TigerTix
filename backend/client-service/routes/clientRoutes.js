@@ -1,5 +1,4 @@
 import express from "express";
-import sqlite3 from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 import Database from "better-sqlite3";
@@ -14,6 +13,7 @@ const dbPath = path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
 console.log("DB Path:", dbPath);
 const db = new Database(dbPath, { verbose: console.log });
 
+// Proxy registration request
 router.post("/register", async (req, res) => {
     try {
         const response = await fetch(`${USER_AUTH_URL}/api/register`, {
@@ -29,6 +29,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
+// Proxy login request
 router.post("/login", async (req, res) => {
     try {
         const response = await fetch(`${USER_AUTH_URL}/api/login`, {
@@ -44,36 +45,32 @@ router.post("/login", async (req, res) => {
     }
 });
 
+// List all events
 router.get("/events", (req, res) => {
-  try {
-    const events = db.prepare("SELECT * FROM events").all();
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const events = db.prepare("SELECT * FROM events").all();
+        res.json(events);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
+// Purchase a ticket for an event
 router.post("/:id/purchase", (req, res) => {
-    const eventId = req.params.id;
+    try {
+        const eventId = parseInt(req.params.id, 10);
+        const event = db.prepare("SELECT * FROM events WHERE id = ?").get(eventId);
 
-    db.get("SELECT num_tickets FROM events WHERE id = ?", [eventId], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!row) return res.status(404).json({ error: "Event not found" });
-        if (row.num_tickets <= 0) return res.status(400).json({ error: "No tickets left" });
+        if (!event) return res.status(404).json({ error: "Event not found" });
+        if (event.num_tickets <= 0) return res.status(400).json({ error: "No tickets left" });
 
-        db.run(
-            "UPDATE events SET num_tickets = num_tickets - 1 WHERE id = ?",
-            [eventId],
-            function (updateErr) {
-                if (updateErr) return res.status(500).json({ error: updateErr.message });
+        const updated = db.prepare("UPDATE events SET num_tickets = num_tickets - 1 WHERE id = ?").run(eventId);
+        const updatedEvent = db.prepare("SELECT * FROM events WHERE id = ?").get(eventId);
 
-                db.get("SELECT * FROM events WHERE id = ?", [eventId], (getErr, updatedRow) => {
-                    if (getErr) return res.status(500).json({ error: getErr.message });
-                    res.json({ event: updatedRow });
-                });
-            }
-        );
-    });
+        res.json({ event: updatedEvent });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 export default router;

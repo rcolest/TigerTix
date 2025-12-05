@@ -1,60 +1,50 @@
-import sqlite3 from 'better-sqlite3';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import Database from "better-sqlite3";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
-const db = new Database(dbPath, { verbose: console.log });
+const db = new Database(dbPath);
+
+// ------------------
+//   DB QUERIES
+// ------------------
 
 export const getAllEvents = () => {
   return db.prepare("SELECT * FROM events").all();
 };
 
 const wordToNumber = {
-  'a': 1,
-  'an': 1,
-  'one': 1,
-  'two': 2,
-  'three': 3,
-  'four': 4,
-  'five': 5,
-  'six': 6,
-  'seven': 7,
-  'eight': 8,
-  'nine': 9,
-  'ten': 10,
+  a: 1, an: 1, one: 1, two: 2, three: 3,
+  four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10,
 };
 
-export const parseMessage = async (message) => {
-  if (!message) throw new Error('No message provided');
+export const parseMessage = (message) => {
+  if (!message) throw new Error("No message provided");
 
   const lower = message.toLowerCase();
-  const events = await getAllEvents();
+  const events = getAllEvents();
 
-  let matchedEvent = null;
-  for (const e of events) {
-    if (lower.includes(e.name.toLowerCase())) {
-      matchedEvent = e.name;
-      break;
-    }
-  }
+  let matchedEvent = events.find(e =>
+    lower.includes(e.name.toLowerCase())
+  );
 
   if (!matchedEvent) {
-    return { intent: 'unknown', response: "Sorry, I didn't understand which event." };
+    return { intent: "unknown", response: "Sorry, I didn't understand which event." };
   }
 
-  let tickets = 1; 
+  // detect ticket count
+  let tickets = 1;
 
-  const digitMatch = lower.match(/(\d+)/);
+  const digitMatch = lower.match(/\d+/);
   if (digitMatch) {
-    tickets = parseInt(digitMatch[1], 10);
+    tickets = parseInt(digitMatch[0]);
   } else {
     for (const [word, num] of Object.entries(wordToNumber)) {
-      const regex = new RegExp(`\\b${word}\\b`, 'i'); 
-      if (regex.test(lower)) {
+      if (new RegExp(`\\b${word}\\b`).test(lower)) {
         tickets = num;
         break;
       }
@@ -62,51 +52,41 @@ export const parseMessage = async (message) => {
   }
 
   return {
-    intent: 'book',
-    event: matchedEvent,
+    intent: "book",
+    event: matchedEvent.name,
     tickets
   };
 };
 
-export const bookTicket = async (eventName, tickets) => {
-  return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      db.run('BEGIN TRANSACTION');
+export const bookTicket = (eventName, tickets) => {
+  const getEventStmt = db.prepare("SELECT id, num_tickets FROM events WHERE name = ?");
+  const updateStmt = db.prepare("UPDATE events SET num_tickets = ? WHERE id = ?");
+  const commit = db.prepare("COMMIT");
+  const begin = db.prepare("BEGIN");
+  const rollback = db.prepare("ROLLBACK");
 
-      db.get('SELECT id, num_tickets FROM events WHERE name = ?', [eventName], (err, row) => {
-        if (err) {
-          db.run('ROLLBACK');
-          return reject(err);
-        }
-        if (!row) {
-          db.run('ROLLBACK');
-          return reject(new Error('Event not found'));
-        }
-        if (row.num_tickets < tickets) {
-          db.run('ROLLBACK');
-          return reject(new Error('Not enough tickets left'));
-        }
+  begin.run();
 
-        const newCount = row.num_tickets - tickets;
-        db.run(
-          'UPDATE events SET num_tickets = ? WHERE id = ?',
-          [newCount, row.id],
-          function (err) {
-            if (err) {
-              db.run('ROLLBACK');
-              return reject(err);
-            }
+  try {
+    const row = getEventStmt.get(eventName);
+    if (!row) {
+      rollback.run();
+      throw new Error("Event not found");
+    }
 
-            db.run('COMMIT', (err) => {
-              if (err) {
-                db.run('ROLLBACK');
-                return reject(err);
-              }
-              resolve({ id: row.id, num_tickets: newCount });
-            });
-          }
-        );
-      });
-    });
-  });
+    if (row.num_tickets < tickets) {
+      rollback.run();
+      throw new Error("Not enough tickets left");
+    }
+
+    const newCount = row.num_tickets - tickets;
+    updateStmt.run(newCount, row.id);
+
+    commit.run();
+
+    return { id: row.id, num_tickets: newCount };
+  } catch (err) {
+    rollback.run();
+    throw err;
+  }
 };

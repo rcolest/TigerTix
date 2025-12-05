@@ -1,6 +1,6 @@
 {
   "name": "client-service",
-  "type":"module",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^9.6.0",
     "node-fetch": "^3.3.2"
   }
 }

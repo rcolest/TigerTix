@@ -13,6 +13,11 @@ export default function Events() {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
+  // 🔥 CHATBOT ADDED
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+
   const fetchEvents = async () => {
     try {
       const res = await fetch(`${API}/client/events`, {
@@ -118,6 +123,39 @@ export default function Events() {
     }
   };
 
+  // 🔥 CHATBOT: SEND MESSAGE
+  const sendChatMessage = async () => {
+    if (!chatInput.trim()) return;
+
+    // Add the user message
+    setChatMessages((prev) => [...prev, { from: "user", text: chatInput }]);
+
+    const messageToSend = chatInput;
+    setChatInput("");
+
+    try {
+      const res = await fetch(`${API}/llm/ask`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageToSend })
+      });
+
+      const data = await res.json();
+
+      setChatMessages((prev) => [
+        ...prev,
+        { from: "bot", text: data.reply || "No response" }
+      ]);
+    } catch (err) {
+      setChatMessages((prev) => [
+        ...prev,
+        { from: "bot", text: "Error contacting assistant." }
+      ]);
+    }
+  };
+
+  // LOGIN PAGE
   if (!loggedIn) {
     return (
       <div>
@@ -179,6 +217,7 @@ export default function Events() {
     );
   }
 
+  // MAIN PAGE (Logged In)
   return (
     <div>
       <h2>Campus Events</h2>
@@ -203,6 +242,43 @@ export default function Events() {
           </li>
         ))}
       </ul>
+
+      {/* 🔥 CHATBOT UI */}
+      <div style={{ marginTop: "40px" }}>
+        <button onClick={() => setChatOpen(!chatOpen)}>
+          {chatOpen ? "Hide Assistant" : "Open Assistant"}
+        </button>
+
+        {chatOpen && (
+          <div
+            style={{
+              width: "300px",
+              height: "350px",
+              border: "1px solid black",
+              padding: "10px",
+              marginTop: "10px",
+              overflowY: "auto",
+              background: "#fafafa"
+            }}
+          >
+            <div style={{ height: "260px", overflowY: "scroll" }}>
+              {chatMessages.map((m, i) => (
+                <p key={i} style={{ color: m.from === "user" ? "blue" : "green" }}>
+                  <strong>{m.from}:</strong> {m.text}
+                </p>
+              ))}
+            </div>
+
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              style={{ width: "80%" }}
+            />
+            <button onClick={sendChatMessage}>Send</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

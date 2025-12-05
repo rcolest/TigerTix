@@ -23,6 +23,6 @@ app.use(cors({
 app.options(/.*/, cors());
 
 app.use(express.json());
-app.use("/llm", llmRoutes);
+app.use("", llmRoutes);
 
 export default app;

@@ -219,35 +219,66 @@ export default function Events() {
 
   // MAIN PAGE (Logged In)
   return (
-  <div>
-    <h2>Campus Events</h2>
+    <div>
+      <h2>Campus Events</h2>
 
-    <p role="status">Logged in as {loginUsername}</p>
-    <button onClick={logout}>Log Out</button>
+      <p role="status">Logged in as {loginUsername}</p>
+      <button onClick={logout}>Log Out</button>
 
-    {message && <p role="status">{message}</p>}
+      {message && <p role="status">{message}</p>}
 
-    <ul>
-      {events.map((event) => (
-        <li key={event.id}>
-          <h3>{event.name}</h3>
-          <p>{event.date}</p>
-          <p>Tickets Available: {event.num_tickets}</p>
-          <button
-            onClick={() => buyTicket(event.id)}
-            disabled={event.num_tickets <= 0}
+      <ul>
+        {events.map((event) => (
+          <li key={event.id}>
+            <h3>{event.name}</h3>
+            <p>{event.date}</p>
+            <p>Tickets Available: {event.num_tickets}</p>
+            <button
+              onClick={() => buyTicket(event.id)}
+              disabled={event.num_tickets <= 0}
+            >
+              Buy Ticket
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* 🔥 CHATBOT UI */}
+      <div style={{ marginTop: "40px" }}>
+        <button onClick={() => setChatOpen(!chatOpen)}>
+          {chatOpen ? "Hide Assistant" : "Open Assistant"}
+        </button>
+
+        {chatOpen && (
+          <div
+            style={{
+              width: "300px",
+              height: "350px",
+              border: "1px solid black",
+              padding: "10px",
+              marginTop: "10px",
+              overflowY: "auto",
+              background: "#fafafa"
+            }}
           >
-            Buy Ticket
-          </button>
-        </li>
-      ))}
-    </ul>
+            <div style={{ height: "260px", overflowY: "scroll" }}>
+              {chatMessages.map((m, i) => (
+                <p key={i} style={{ color: m.from === "user" ? "blue" : "green" }}>
+                  <strong>{m.from}:</strong> {m.text}
+                </p>
+              ))}
+            </div>
 
-    {/* ---------- CHATBOT ---------- */}
-    <div style={{ marginTop: "40px", padding: "20px", border: "1px solid #ccc" }}>
-      <h3>Ask TigerTix AI</h3>
-
-      <Chatbot API={API} events={events} setEvents={setEvents} />
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              style={{ width: "80%" }}
+            />
+            <button onClick={sendChatMessage}>Send</button>
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+}

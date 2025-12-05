@@ -71,6 +71,12 @@ try {
   process.exit(1);
 }
 
+console.log("[AUTH MODEL] BetterSQLite3 module:", Database);
+console.log("[AUTH MODEL] Database constructor:", typeof Database);
+console.log("[AUTH MODEL] db after initialization:", db);
+console.log("[AUTH MODEL] db.get exists:", db && typeof db.get);
+console.log("[AUTH MODEL] db.prepare exists:", db && typeof db.prepare);
+
 export const findUserByUsername = (username) => {
   try {
     const sql = `SELECT * FROM savedaccounts WHERE username = ?`;
